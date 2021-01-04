@@ -2,8 +2,11 @@ import os
 import numpy
 
 # This is the program to delete all the duplicate Xtruth Ytruth files generated
-input_dir = './'
-delete_mse_file_mode = True                            # Deleting the mse file for the forward filtering
+#input_dir = '/work/sr365/multi_eval/'                # NIPS code version
+#input_dir = '/work/sr365/multi_eval/'                # NIPS code version
+input_dir = '/work/sr365/ICML_exp_1231/'                # ICML code version
+#input_dir = '/work/sr365/ICML_mm/'                # ICML code version --- MM special
+delete_mse_file_mode = False                            # Deleting the mse file for the forward filtering
 
 
 # For all the architectures
@@ -31,6 +34,10 @@ for folders in os.listdir(input_dir):
                             os.rename(current_file, os.path.join(current_folder, 'Xtruth.csv'))
                         else:
                             os.remove(current_file)
+                    elif '_Ypred_' in file and file.endswith(dataset + '.csv'):
+                        os.rename(current_file, os.path.join(current_folder, 'Ypred.csv'))
+                    elif '_Xpred_' in file and file.endswith(dataset + '.csv'):
+                        os.rename(current_file, os.path.join(current_folder, 'Xpred.csv'))
                     if delete_mse_file_mode and 'mse_' in file:
                         os.remove(current_file)
                         

@@ -33,7 +33,7 @@ def determine_final_position(origin_pos, arm_angles, arm_lengths=arm_lengths, ev
     # Start computing for positions
     positions = []                                          # Holder for positions to be plotted
     current_pos = np.zeros([len(origin_pos), 2])            # The robotic arm starts from [0, y]
-    print("shape of current_pos = ", np.shape(current_pos))
+    #print("shape of current_pos = ", np.shape(current_pos))
     current_pos[:, 0] = 0                                   # The x axis is 0 for all cases
     current_pos[:, 1] = origin_pos                          # Plug in the
     positions.append(np.copy(current_pos))
@@ -98,11 +98,11 @@ def Sample_through_space():
         data_x[:, i] *= np.sqrt(sample_vars[i])
         print(np.var(data_x[:, i]))
     # print("data_x", data_x)
-    print("shape of data_x is:", np.shape(data_x))
+    #print("shape of data_x is:", np.shape(data_x))
     data_y, positions = determine_final_position(data_x[:, 0], data_x[:, 1:])
     # print("data_y", data_y)
-    print("shape of data_y is", np.shape(data_y))
-    print("shape of positions is:", np.shape(positions))
+    #print("shape of data_y is", np.shape(data_y))
+    #print("shape of positions is:", np.shape(positions))
     # print("position=", positions)
     plot_arms(positions)
     np.savetxt('data_x.csv', data_x, delimiter=',')

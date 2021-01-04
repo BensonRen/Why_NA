@@ -1,0 +1,12 @@
+*/data/*
+**.err
+**.out
+**.pth
+**retrain*
+**.sh
+NA/Simulated_*
+**__pycache__
+**.csv
+**.png
+**.jpg
+

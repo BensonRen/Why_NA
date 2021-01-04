@@ -14,6 +14,7 @@ from NA.model_maker import NA
 from utils import data_reader
 from utils.helper_functions import load_flags
 from utils.evaluation_helper import plotMSELossDistrib
+from utils.create_folder_modulized import get_folder_modulized
 import torch
 # Libs
 import numpy as np
@@ -148,7 +149,7 @@ def ensemble_predict_master(model_dir, Xpred_file, no_plot, plot_dir=None):
 def predict_ensemble_for_all(model_dir, Xpred_file_dirs, no_plot):
     for files in os.listdir(Xpred_file_dirs):
         if 'Xpred' in files and 'meta_material' in files:
-            ensemble_predict_master(model_dir, os.path.join(Xpred_file_dirs, files), Xpred_file_dirs, no_plot=no_plot)
+            ensemble_predict_master(model_dir, os.path.join(Xpred_file_dirs, files), plot_dir=Xpred_file_dirs, no_plot=no_plot)
 
 def creat_mm_dataset():
     """
@@ -162,9 +163,9 @@ def creat_mm_dataset():
     flags.eval_model = model_folder
     ntwk = Network(NA, flags, train_loader=None, test_loader=None, inference_mode=True, saved_model=flags.eval_model)
     # This is the full file version, which would take a while. Testing pls use the next line one
-    #geometry_points = os.path.join('..', 'Simulated_DataSets', 'Meta_material_Neural_Simulator', 'dataIn', 'data_x.csv')
+    geometry_points = os.path.join('..', 'Simulated_DataSets', 'Meta_material_Neural_Simulator', 'dataIn', 'data_x.csv')
     # Small version is for testing, the large file taks a while to be generated...
-    geometry_points = os.path.join('..', 'Simulated_DataSets', 'Meta_material_Neural_Simulator', 'dataIn', 'data_x_small.csv')
+    #geometry_points = os.path.join('..', 'Simulated_DataSets', 'Meta_material_Neural_Simulator', 'dataIn', 'data_x_small.csv')
     Y_filename = geometry_points.replace('data_x', 'data_y')
 
     # Set up the list of prediction files
@@ -197,13 +198,18 @@ if __name__ == '__main__':
    
     # Single evaluation in the data folder of each method
     #method_list = ['Tandem','MDN','INN_FrEIA','cINN','NA','VAE']
-    #method_list = ['NA']
     #for method in method_list:
-    #    predict_ensemble_for_all('../Simulated_DataSets/Meta_material_Neural_Simulator/state_dicts/', '../'+ method + '/data/tmp/', no_plot=False)  
+    #    predict_ensemble_for_all('../Simulated_DataSets/Meta_material_Neural_Simulator/state_dicts/', '../'+ method + '/data/', no_plot=False)  
         
     
     # Multi evaluation in the multi_eval folder of each method
+    #method_list_multi = ['INN']
     #method_list_multi = ['Tandem','MDN','INN','cINN','NA','VAE']
-    method_list_multi = ['NA']
+    #for method in method_list_multi:
+    #    predict_ensemble_for_all('../Simulated_DataSets/Meta_material_Neural_Simulator/state_dicts/', '/work/sr365/multi_eval/'+ method + '/meta_material/', no_plot=True)  
+        #predict_ensemble_for_all('../Simulated_DataSets/Meta_material_Neural_Simulator/state_dicts/', '../multi_eval/'+ method + '/meta_material/', no_plot=True)  
+
+    # This is for the modulized multi evaluation in the ICML_EXP folder
+    method_list_multi = get_folder_modulized()
     for method in method_list_multi:
-        predict_ensemble_for_all('../Simulated_DataSets/Meta_material_Neural_Simulator/state_dicts/', '../multi_eval/'+ method + '/meta_material/', no_plot=True)  
+        predict_ensemble_for_all('../Simulated_DataSets/Meta_material_Neural_Simulator/state_dicts/', os.path.join(method, 'meta_material/'), no_plot=True)  

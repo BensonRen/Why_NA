@@ -76,9 +76,10 @@ def evaluate_different_dataset(multi_flag, eval_data_all):
      """
      data_set_list = ["robotic_arm","sine_wave","ballistics","meta_material"]
      for eval_model in data_set_list:
-        useless_flags = flag_reader.read_flag()
-        useless_flags.eval_model = "retrain0" + eval_model
-        evaluate_from_model(useless_flags.eval_model, multi_flag=multi_flag, eval_data_all=eval_data_all)
+        for j in range(1):
+            useless_flags = flag_reader.read_flag()
+            useless_flags.eval_model = "retrain"+ str(j) + eval_model
+            evaluate_from_model(useless_flags.eval_model, multi_flag=multi_flag, eval_data_all=eval_data_all)
 
 if __name__ == '__main__':
     # Read the flag, however only the flags.eval_model is used and others are not used

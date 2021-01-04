@@ -65,7 +65,7 @@ def evaluate_from_model(model_dir, multi_flag=False, eval_data_all=False, save_m
     # Evaluation process
     print("Start eval now:")
     if multi_flag:
-        pred_file, truth_file = ntwk.evaluate(save_dir='../multi_eval/NA/' + flags.data_set, save_all=True,
+        pred_file, truth_file = ntwk.evaluate(save_dir='/work/sr365/multi_eval/NA/' + flags.data_set, save_all=True,
                                                 save_misc=save_misc, MSE_Simulator=MSE_Simulator,save_Simulator_Ypred=save_Simulator_Ypred)
     else:
         pred_file, truth_file = ntwk.evaluate(save_misc=save_misc, MSE_Simulator=MSE_Simulator, save_Simulator_Ypred=save_Simulator_Ypred)
@@ -89,9 +89,10 @@ def evaluate_different_dataset(multi_flag, eval_data_all, save_Simulator_Ypred=F
      """
      This function is to evaluate all different datasets in the model with one function call
      """
-     data_set_list = ["robotic_arm","sine_wave","ballistics","meta_material"]
+     #data_set_list = ["robotic_arm","sine_wave","ballistics","meta_material"]
+     data_set_list = ["robotic_arm", "ballistics"]
      for eval_model in data_set_list:
-        for j in range(1):
+        for j in range(1,2):
             useless_flags = flag_reader.read_flag()
             useless_flags.eval_model = "retrain" + str(j) + eval_model
             evaluate_from_model(useless_flags.eval_model, multi_flag=multi_flag, eval_data_all=eval_data_all, save_Simulator_Ypred=save_Simulator_Ypred, MSE_Simulator=MSE_Simulator)
@@ -105,6 +106,6 @@ if __name__ == '__main__':
     # different dataset #
     #####################
     # This is to run the single evaluation, please run this first to make sure the current model is well-trained before going to the multiple evaluation code below
-    evaluate_different_dataset(multi_flag=False, eval_data_all=False, save_Simulator_Ypred=True, MSE_Simulator=False)
+    #evaluate_different_dataset(multi_flag=False, eval_data_all=False, save_Simulator_Ypred=True, MSE_Simulator=False)
     # This is for multi evaluation for generating the Fig 3, evaluating the models under various T values
-    #evaluate_different_dataset(multi_flag=True, eval_data_all=False, save_Simulator_Ypred=True, MSE_Simulator=False)
+    evaluate_different_dataset(multi_flag=True, eval_data_all=False, save_Simulator_Ypred=True, MSE_Simulator=False)

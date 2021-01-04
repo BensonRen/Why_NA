@@ -41,8 +41,8 @@ def getYfromX(x):
     y_shape = np.array(np.shape(x))
     y_shape[-1] = 1             # y_dimension hard-coded
     data_y = np.zeros(y_shape)
-    print("shape of data_y is", np.shape(data_y))
-    print("shape of input x is", np.shape(x))
+    #print("shape of data_y is", np.shape(data_y))
+    #print("shape of input x is", np.shape(x))
     data_y = sin(f*np.pi*x[:,0])  +  cos(f*np.pi*x[:,1])
     #for i in range(2):
         #data_y[:] += sin(f*np.pi*x[:, i])

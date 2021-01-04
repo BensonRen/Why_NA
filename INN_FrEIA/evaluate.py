@@ -16,7 +16,7 @@ from utils.evaluation_helper import get_test_ratio_helper
 
 # Libs
 
-def evaluate_from_model(model_dir, multi_flag=False, eval_data_all=False):
+def evaluate_from_model(model_dir, multi_flag=False, eval_data_all=False, modulized_flag=False):
     """
     Evaluating interface. 1. Retreive the flags 2. get data 3. initialize network 4. eval
     :param model_dir: The folder to retrieve the model
@@ -46,13 +46,15 @@ def evaluate_from_model(model_dir, multi_flag=False, eval_data_all=False):
 
     # Evaluation process
     print("Start eval now:")
-    if multi_flag:
+    if modulized_flag:
+        ntwk.evaluate_modulized_multi_time()
+    elif multi_flag:
         ntwk.evaluate_multiple_time()
     else:
         pred_file, truth_file = ntwk.evaluate()
 
     # Plot the MSE distribution
-    if flags.data_set != 'meta_material' and not multi_flag: 
+    if flags.data_set != 'meta_material' and not multi_flag and not modulized_flag: 
         plotMSELossDistrib(pred_file, truth_file, flags)
     print("Evaluation finished")
    
@@ -66,17 +68,18 @@ def evaluate_all(models_dir="models"):
             evaluate_from_model(os.path.join(models_dir, file))
     return None
 
-def evaluate_different_dataset(multi_flag, eval_data_all):
+def evaluate_different_dataset(multi_flag=False, eval_data_all=False, modulized_flag=False):
      """
      This function is to evaluate all different datasets in the model with one function call
      """
-     #data_set_list = []
+     #data_set_list = ["robotic_arm"]
      data_set_list = ["meta_material","sine_wave","ballistics","robotic_arm"]
      for eval_model in data_set_list:
         for j in range(1):
             useless_flags = flag_reader.read_flag()
             useless_flags.eval_model = "retrain" + str(j) + eval_model
-            evaluate_from_model(useless_flags.eval_model, multi_flag=multi_flag, eval_data_all=eval_data_all)
+            evaluate_from_model(useless_flags.eval_model, multi_flag=multi_flag, 
+                                eval_data_all=eval_data_all, modulized_flag=modulized_flag)
 
 
 if __name__ == '__main__':
@@ -87,11 +90,16 @@ if __name__ == '__main__':
     #evaluate_from_model(useless_flags.eval_model)
     #evaluate_from_model(useless_flags.eval_model, multi_flag=True)
     #evaluate_from_model(useless_flags.eval_model, multi_flag=False, eval_data_all=True)
+    
+    ##############################################
+    # evaluate multiple dataset at the same time!#
+    ##############################################
     #evaluate_different_dataset(multi_flag=False, eval_data_all=False)
-    evaluate_different_dataset(multi_flag=True, eval_data_all=False)
+    #evaluate_different_dataset(multi_flag=True, eval_data_all=False)
+    
+    evaluate_different_dataset(modulized_flag=True)
+    
+    
     # Call the evaluate function from model
     # evaluate_from_model(useless_flags.eval_model)
-
-    #evaluate_all("/work/sr365/INN/sine_wave")
-    #evaluate_all("models/swipe")
 

@@ -408,18 +408,54 @@ def get_bvl(file_path):
         return float(bvl)
 
 
-def MeanAvgnMinMSEvsTry(data_dir):
+
+def get_xpred_ytruth_xtruth_from_folder(data_dir):
     """
-    Plot the mean average Mean and Min Squared error over Tries
+    This function get the list of Xpred and single Ytruth file in the folder from multi_eval and output the list of Xpred, single Ytruth and Single Xtruth numpy array for further operation
+    Since this is not operating on NA series, there is no order in the Xpred files
+    ###########################################################
+    #NOTE: THIS FUNCTION SHOULD NOT OPERATE ON NA BASED METHOD#
+    ###########################################################
+    :param data_dir: The directory to get the files
+    :output Xpred_list: The list of Xpred files, each element is a numpy array with same shape of Xtruth
+    :output Ytruth: The Ytruth numpy array
+    :output Xtruth: The Xtruth numpy array
+    """
+    # Reading Truth files
+    Yt = pd.read_csv(os.path.join(data_dir, 'Ytruth.csv'), header=None, delimiter=' ').values
+    Xt = pd.read_csv(os.path.join(data_dir, 'Xtruth.csv'), header=None, delimiter=' ').values
+    # Reading the list of prediction files
+    Xpred_list = []
+    for files in os.listdir(data_dir):
+        if 'Xpred' in files:
+            Xp = pd.read_csv(os.path.join(data_dir, files), header=None, delimiter=' ').values
+            Xpred_list.append(Xp)
+    return Xpred_list, Xt, Yt
+
+def reshape_xpred_list_to_mat(Xpred_list):
+    """
+    This function reshapes the Xpred list (typically from "get_xpred_ytruth_xtruth_from_folder") which has the shape: #initialization (2048, as a list) x #data_point (1000) x #xdim 
+    into a matrix form for easier formatting for the backpropagation in NA modes
+    :param Xpred_list: A list of #init, each element has shape of (#data_point 1000 x #xdim)
+    :output X_init_mat: A matrix of shape (2048, 1000, dxim)
+    """
+    # Get length of list (2048)
+    list_length = len(Xpred_list)
+    # Get shape of Xpred files
+    xshape = np.shape(Xpred_list[0])
+    # Init the big matrix
+    X_init_mat = np.zeros([list_length, xshape[0], xshape[1]])
+    # Fill in the matrix
+    for ind, xpred in enumerate(Xpred_list):
+        X_init_mat[ind,:,:] = np.copy(xpred)
+    return X_init_mat
+
+def get_mse_mat_from_folder(data_dir):
+    """
+    The function to get the mse matrix from the giant folder that contains all the multi_eval files.
+    Due to the data structure difference of NA storing, we would handle NA in different way than other algorithms
     :param data_dir: The directory where the data is in
-    :param title: The title for the plot
-    :return:
     """
-    # Read Ytruth file
-    if not os.path.isdir(data_dir): 
-        print("Your data_dir is not a folder in MeanAvgnMinMSEvsTry function")
-        print("Your data_dir is:", data_dir)
-        return
     Yt = pd.read_csv(os.path.join(data_dir, 'Ytruth.csv'), header=None, delimiter=' ').values
     print("shape of ytruth is", np.shape(Yt))
     # Get all the Ypred into list
@@ -428,7 +464,7 @@ def MeanAvgnMinMSEvsTry(data_dir):
     ####################################################################
     # Special handling for NA as it output file structure is different #
     ####################################################################
-    if 'NA' in data_dir or 'BP' in data_dir: 
+    if 'NA' in data_dir or 'on' in data_dir: 
         l, w = np.shape(Yt)
         num_trails = 200
         Ypred_mat = np.zeros([l, num_trails, w])
@@ -495,7 +531,25 @@ def MeanAvgnMinMSEvsTry(data_dir):
             mse_mat[ind, :] = mse
     print("shape of the yp is", np.shape(yp)) 
     print("shape of mse is", np.shape(mse))
+
+    return mse_mat, Ypred_list
     
+def MeanAvgnMinMSEvsTry(data_dir):
+    """
+    Plot the mean average Mean and Min Squared error over Tries
+    :param data_dir: The directory where the data is in
+    :param title: The title for the plot
+    :return:
+    """
+    # Read Ytruth file
+    if not os.path.isdir(data_dir): 
+        print("Your data_dir is not a folder in MeanAvgnMinMSEvsTry function")
+        print("Your data_dir is:", data_dir)
+        return
+
+    # Get the MSE matrix from the giant folder with multi_eval
+    mse_mat, Ypred_list = get_mse_mat_from_folder(data_dir)
+        
     # Shuffle array and average results
     shuffle_number = 0
     if shuffle_number > 0:
@@ -655,9 +709,9 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
                 min_dict[dirs] = mse_min_list
                 std_dict[dirs] = mse_std_list
                 quan2575_dict[dirs] = mse_quan2575_list
-    print(min_dict)
+    print("printing the min_dict", min_dict)
        
-    def plotDict(dict, name, data_name=None, logy=False, time_in_s_table=None, plot_points=51, avg_dict=None, resolution=5, err_dict=None):
+    def plotDict(dict, name, data_name=None, logy=False, time_in_s_table=None, plot_points=51, avg_dict=None, resolution=5, err_dict=None, color_assign=False):
         """
         :param name: the name to save the plot
         :param dict: the dictionary to plot
@@ -682,11 +736,16 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
             print(key)
             #print(dict[key])
             if err_dict is None:
-                plt.plot(x_axis[:plot_points:resolution], dict[key][:plot_points:resolution],c=color_dict[key],label=key)
+                if color_assign:
+                    plt.plot(x_axis[:plot_points:resolution], dict[key][:plot_points:resolution],c=color_dict[key],label=key)
+                else:
+                    plt.plot(x_axis[:plot_points:resolution], dict[key][:plot_points:resolution],label=key)
             else:
                 print(np.shape(err_dict[key]))
-                plt.errorbar(x_axis[:plot_points:resolution], dict[key][:plot_points:resolution],c=color_dict[key],
-                        yerr=err_dict[key][:, :plot_points:resolution], label=key.replace('_',' '), capsize=5)#, errorevery=resolution)#,
+                if color_assign:
+                    plt.errorbar(x_axis[:plot_points:resolution], dict[key][:plot_points:resolution],c=color_dict[key], yerr=err_dict[key][:, :plot_points:resolution], label=key.replace('_',' '), capsize=5)#, errorevery=resolution)#,
+                else:
+                    plt.errorbar(x_axis[:plot_points:resolution], dict[key][:plot_points:resolution], yerr=err_dict[key][:, :plot_points:resolution], label=key.replace('_',' '), capsize=5)#, errorevery=resolution)#,
                         #dash_capstyle='round')#, uplims=True, lolims=True)
         if logy:
             ax = plt.gca()
@@ -771,7 +830,25 @@ def DrawEvaluationTime(data_dir, data_name, save_name='evaluation_time', logy=Fa
         plt.savefig(os.path.join(data_dir, data_name + save_name + '.png'))
 
 if __name__ == '__main__':
-    MeanAvgnMinMSEvsTry_all('../multi_eval')
-    datasets = ['meta_material', 'robotic_arm','sine_wave','ballistics']
+    # NIPS version 
+    MeanAvgnMinMSEvsTry_all('/work/sr365/multi_eval/')
+    datasets = ['robotic_arm','ballistics']
+    #datasets = ['meta_material', 'robotic_arm','sine_wave','ballistics']
     for dataset in datasets:
-        DrawAggregateMeanAvgnMSEPlot('../multi_eval', dataset)
+        DrawAggregateMeanAvgnMSEPlot('/work/sr365/multi_eval/', dataset)
+    
+    # NIPS version for INN robo
+    #MeanAvgnMinMSEvsTry_all('/work/sr365/multi_eval/special/')
+    #datasets = ['robotic_arm']
+    #datasets = ['meta_material', 'robotic_arm','sine_wave','ballistics']
+    #for dataset in datasets:
+    #    DrawAggregateMeanAvgnMSEPlot('/work/sr365/multi_eval/special', dataset)
+    
+    
+    # Modulized version (ICML)
+    #algo_list = ['cINN','INN','VAE','MDN','Random'] 
+    #for algo in algo_list:
+    #    MeanAvgnMinMSEvsTry_all('/work/sr365/ICML_exp_1218/' + algo + '/')
+    #    datasets = ['robotic_arm','sine_wave','ballistics']
+    #    for dataset in datasets:
+    #        DrawAggregateMeanAvgnMSEPlot('/work/sr365/ICML_exp_1218/'+algo+'/', dataset)

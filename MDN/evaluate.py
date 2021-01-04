@@ -18,7 +18,7 @@ from utils.evaluation_helper import get_test_ratio_helper
 import numpy as np
 import matplotlib.pyplot as plt
 
-def evaluate_from_model(model_dir, multi_flag=False, eval_data_all=False):
+def evaluate_from_model(model_dir, multi_flag=False, eval_data_all=False, modulized_flag=False):
     """
     Evaluating interface. 1. Retreive the flags 2. get data 3. initialize network 4. eval
     :param model_dir: The folder to retrieve the model
@@ -37,9 +37,6 @@ def evaluate_from_model(model_dir, multi_flag=False, eval_data_all=False):
     flags.eval_model = model_dir                    # Reset the eval mode
     flags.test_ratio = get_test_ratio_helper(flags)
 
-    # 2020.10.10 only, delete afterward
-    flags.test_ratio *= 2
-
     # Get the data
     train_loader, test_loader = data_reader.read_data(flags, eval_data_all=eval_data_all)
     print("Making network now")
@@ -52,13 +49,15 @@ def evaluate_from_model(model_dir, multi_flag=False, eval_data_all=False):
     print(pytorch_total_params)
     # Evaluation process
     print("Start eval now:")
-    if multi_flag:
+    if modulized_flag:
+        ntwk.evaluate_modulized_multi_time()
+    elif multi_flag:
         ntwk.evaluate_multiple_time()
     else:
         pred_file, truth_file = ntwk.evaluate()
 
     # Plot the MSE distribution
-    if flags.data_set != 'meta_material' and not multi_flag: 
+    if flags.data_set != 'meta_material' and not multi_flag and not modulized_flag:  # meta-material does not have simulator, hence no Ypred given
         plotMSELossDistrib(pred_file, truth_file, flags)
     print("Evaluation finished")
    
@@ -73,15 +72,18 @@ def evaluate_all(models_dir="models"):
     return None
 
 
-def evaluate_different_dataset(multi_flag, eval_data_all):
+def evaluate_different_dataset(multi_flag=False, eval_data_all=False, modulized_flag=False):
      """
      This function is to evaluate all different datasets in the model with one function call
      """
+     #data_set_list = ["meta_material"]
      data_set_list = ["robotic_arm","sine_wave","ballistics","meta_material"]
      for eval_model in data_set_list:
-        useless_flags = flag_reader.read_flag()
-        useless_flags.eval_model = "retrain0" + eval_model
-        evaluate_from_model(useless_flags.eval_model, multi_flag=multi_flag, eval_data_all=eval_data_all)
+        for j in range(1):
+            useless_flags = flag_reader.read_flag()
+            useless_flags.eval_model = "retrain" + str(j) + eval_model
+            evaluate_from_model(useless_flags.eval_model, multi_flag=multi_flag, 
+                                eval_data_all=eval_data_all, modulized_flag=modulized_flag)
 
 if __name__ == '__main__':
     # Read the flag, however only the flags.eval_model is used and others are not used
@@ -102,6 +104,7 @@ if __name__ == '__main__':
     ############################
     ### Call the "evaluate_different_dataset" function to evaluate all the models in the "models" folder, the multi_flag is to control whether evaulate across T or only do T=1 (if set to False), make sure you change the model name in function if you have any different model name 
     #evaluate_different_dataset(multi_flag=False, eval_data_all=False)
-    evaluate_different_dataset(multi_flag=True, eval_data_all=False)
+    #evaluate_different_dataset(multi_flag=True, eval_data_all=False)
+    evaluate_different_dataset(modulized_flag=True)
     #evaluate_all("models/MM")
 

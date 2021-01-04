@@ -225,7 +225,37 @@ class Network(object):
         self.log.close()
         tk.record(1)                    # Record at the end of the training
 
-    def evaluate(self, save_dir='data/', save_all=False, MSE_Simulator=False, save_misc=False, save_Simulator_Ypred=False):
+    def modulized_bp_ff(self, X_init_mat, Ytruth, FF, save_dir='data/', save_all=True):
+        """
+        The "evaluation" function for the modulized backprop and forward filtering. It takes the X_init_mat as the different initializations of the X values and do evaluate function on that instead of taking evaluation data from the data loader
+        :param X_init_mat: The input initialization of X positions, numpy array of shape (#init, #point, #xdim) usually (2048, 1000, xdim)
+        :param Yturth: The Ytruth numpy array of shape (#point, #ydim)
+        :param save_dir: The directory to save the results
+        :param FF(forward_filtering): The flag to control whether use forward filtering or not
+        """
+        self.load()                             # load the model as constructed
+        try:
+            bs = self.flags.backprop_step         # for previous code that did not incorporate this
+        except AttributeError:
+            print("There is no attribute backprop_step, catched error and adding this now")
+            self.flags.backprop_step = 300
+        cuda = True if torch.cuda.is_available() else False
+        if cuda:
+            self.model.cuda()
+        self.model.eval()
+        saved_model_str = self.saved_model.replace('/','_')
+
+        # Prepare Ytruth into tensor
+        Yt = self.build_tensor(Ytruth, requires_grad=False)
+        print("shape of Yt in modulized bp ff is:", Yt.size())
+        print("shape of the X_init_mat is:", np.shape(X_init_mat))
+        # Loop through #points
+        for ind in range(np.shape(X_init_mat)[1]):
+            Xpred, Ypred, loss = self.evaluate_one(Yt[ind,:], save_dir=save_dir, save_all=save_all, ind=ind, init_from_Xpred=X_init_mat[:,ind,:], FF=FF)
+        return None
+            
+
+    def evaluate(self, save_dir='data/', save_all=False, MSE_Simulator=False, save_misc=False, save_Simulator_Ypred=True):
         """
         The function to evaluate how good the Neural Adjoint is and output results
         :param save_dir: The directory to save the results
@@ -271,10 +301,6 @@ class Network(object):
                                                         MSE_Simulator=MSE_Simulator, save_misc=save_misc, save_Simulator_Ypred=save_Simulator_Ypred)
                 tk.record(ind)                          # Keep the time after each evaluation for backprop
                 # self.plot_histogram(loss, ind)                                # Debugging purposes
-                if save_misc:
-                    np.savetxt('visualize_final/point{}_Xtruth.csv'.format(ind), geometry.cpu().data.numpy())
-                    np.savetxt('visualize_final/point{}_Ytruth.csv'.format(ind), spectra.cpu().data.numpy())
-                # suppress printing to evaluate time
                 np.savetxt(fxt, geometry.cpu().data.numpy())
                 np.savetxt(fyt, spectra.cpu().data.numpy())
                 if self.flags.data_set != 'meta_material':
@@ -282,7 +308,7 @@ class Network(object):
                 np.savetxt(fxp, Xpred)
         return Ypred_file, Ytruth_file
 
-    def evaluate_one(self, target_spectra, save_dir='data/', MSE_Simulator=False ,save_all=False, ind=None, save_misc=False, save_Simulator_Ypred=False):
+    def evaluate_one(self, target_spectra, save_dir='data/', MSE_Simulator=False ,save_all=False, ind=None, save_misc=False, save_Simulator_Ypred=True, init_from_Xpred=None, FF=True):
         """
         The function which being called during evaluation and evaluates one target y using # different trails
         :param target_spectra: The target spectra/y to backprop to 
@@ -294,10 +320,11 @@ class Network(object):
         :return: Xpred_best: The 1 single best Xpred corresponds to the best Ypred that is being backproped 
         :return: Ypred_best: The 1 singe best Ypred that is reached by backprop
         :return: MSE_list: The list of MSE at the last stage
+        :param FF(forward_filtering): [default to be true for historical reason] The flag to control whether use forward filtering or not
         """
 
         # Initialize the geometry_eval or the initial guess xs
-        geometry_eval = self.initialize_geometry_eval()
+        geometry_eval = self.initialize_geometry_eval(init_from_Xpred)
         # Set up the learning schedule and optimizer
         self.optm_eval = self.make_optimizer_eval(geometry_eval)#, optimizer_type='SGD')
         self.lr_scheduler = self.make_lr_scheduler(self.optm_eval)
@@ -308,9 +335,12 @@ class Network(object):
         # Begin NA
         for i in range(self.flags.backprop_step):
             # Make the initialization from [-1, 1], can only be in loop due to gradient calculator constraint
-            geometry_eval_input = self.initialize_from_uniform_to_dataset_distrib(geometry_eval)
-            if save_misc and ind == 0 and i == 0:                       # save the modified initial guess to verify distribution
-                np.savetxt('geometry_initialization.csv',geometry_eval_input.cpu().data.numpy())
+            if init_from_Xpred is None:
+                geometry_eval_input = self.initialize_from_uniform_to_dataset_distrib(geometry_eval)
+            else:
+                geometry_eval_input = geometry_eval
+            #if save_misc and ind == 0 and i == 0:                       # save the modified initial guess to verify distribution
+            #    np.savetxt('geometry_initialization.csv',geometry_eval_input.cpu().data.numpy())
             self.optm_eval.zero_grad()                                  # Zero the gradient first
             logit = self.model(geometry_eval_input)                     # Get the output
             ###################################################
@@ -329,12 +359,18 @@ class Network(object):
             ##############################################################
             mse_loss = np.reshape(np.sum(np.square(logit.cpu().data.numpy() - target_spectra_expand.cpu().data.numpy()), axis=1), [-1, 1])
             mse_loss = np.concatenate((mse_loss, np.reshape(np.arange(self.flags.eval_batch_size), [-1, 1])), axis=1)
-            loss_sort = mse_loss[mse_loss[:, 0].argsort(kind='mergesort')]                         # Sort the loss list
+            if FF: # If the forward filtering function is activated (Default yes in NA)
+                loss_sort = mse_loss[mse_loss[:, 0].argsort(kind='mergesort')]                         # Sort the loss list
+            else:
+                loss_sort = mse_loss
             exclude_top = 0
             trail_nums = 1000
             good_index = loss_sort[exclude_top:trail_nums+exclude_top, 1].astype('int')                        # Get the indexs
-            print("In save all funciton, the top 10 index is:", good_index[:10])
-            saved_model_str = self.saved_model.replace('/', '_') + 'inference' + str(ind)
+            #print("In save all funciton, the top 10 index is:", good_index[:10])
+            if init_from_Xpred is None:
+                saved_model_str = self.saved_model.replace('/', '_') + 'inference' + str(ind)
+            else:
+                saved_model_str = self.saved_model.replace('/', '_') + 'modulized_inference' + str(ind)
             Ypred_file = os.path.join(save_dir, 'test_Ypred_point{}.csv'.format(saved_model_str))
             Xpred_file = os.path.join(save_dir, 'test_Xpred_point{}.csv'.format(saved_model_str))
             if self.flags.data_set != 'meta_material':  # This is for meta-meterial dataset, since it does not have a simple simulator
@@ -361,9 +397,9 @@ class Network(object):
         # calculate the MSE list and get the best one
         MSE_list = np.mean(np.square(Ypred - target_spectra_expand.cpu().data.numpy()), axis=1)
         best_estimate_index = np.argmin(MSE_list)
-        print("The best performing one is:", best_estimate_index)
+        #print("The best performing one is:", best_estimate_index)
         Xpred_best = np.reshape(np.copy(geometry_eval_input.cpu().data.numpy()[best_estimate_index, :]), [1, -1])
-        if save_Simulator_Ypred:
+        if save_Simulator_Ypred and self.flags.data_set != 'meta_material':
             Ypred = simulator(self.flags.data_set, geometry_eval_input.cpu().data.numpy())
             if len(np.shape(Ypred)) == 1:           # If this is the ballistics dataset where it only has 1d y'
                 Ypred = np.reshape(Ypred, [-1, 1])
@@ -372,29 +408,33 @@ class Network(object):
         return Xpred_best, Ypred_best, MSE_list
 
 
-    def initialize_geometry_eval(self):
+    def initialize_geometry_eval(self, init_from_Xpred):
         """
         Initialize the geometry eval according to different dataset. These 2 need different handling
+        :param init_from_Xpred: Initiallize from Xpred file, this is for modulized trails
         :return: The initialized geometry eval
+
         """
-        if self.flags.data_set == 'ballistics':
+        if init_from_Xpred is not None:
+            geometry_eval = self.build_tensor(init_from_Xpred, requires_grad=True)
+        elif self.flags.data_set == 'ballistics':
             bs = self.flags.eval_batch_size
             numpy_geometry = np.zeros([bs, self.flags.linear[0]])
             numpy_geometry[:, 0] = np.random.normal(0, 0.25, size=[bs,])
             numpy_geometry[:, 1] = np.random.normal(1.5, 0.25, size=[bs,])
             numpy_geometry[:, 2] = np.radians(np.random.uniform(9, 72, size=[bs,]))
             numpy_geometry[:, 3] = np.random.poisson(15, size=[bs,]) / 15
-            geomtry_eval = self.build_tensor(numpy_geometry, requires_grad=True)
+            geometry_eval = self.build_tensor(numpy_geometry, requires_grad=True)
         elif self.flags.data_set == 'robotic_arm':
             bs = self.flags.eval_batch_size
             numpy_geometry = np.random.normal(0, 0.5, size=[bs, 4])
             numpy_geometry[:, 0] /= 2
-            geomtry_eval = self.build_tensor(numpy_geometry, requires_grad=True)
+            geometry_eval = self.build_tensor(numpy_geometry, requires_grad=True)
             print("robotic_arm specific initialization")
         else:
-            geomtry_eval = torch.rand([self.flags.eval_batch_size, self.flags.linear[0]], requires_grad=True, device='cuda')
+            geometry_eval = torch.rand([self.flags.eval_batch_size, self.flags.linear[0]], requires_grad=True, device='cuda')
         #geomtry_eval = torch.randn([self.flags.eval_batch_size, self.flags.linear[0]], requires_grad=True, device='cuda')
-        return geomtry_eval
+        return geometry_eval
 
     def initialize_from_uniform_to_dataset_distrib(self, geometry_eval):
         """
