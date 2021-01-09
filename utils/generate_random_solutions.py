@@ -10,14 +10,14 @@ from utils.create_folder_modulized import get_folder_modulized
 from utils.helper_functions import simulator
 from Simulated_DataSets.Meta_material_Neural_Simulator.generate_mm_x import generate_meta_material
 
-dataset_list = ['meta_material']
 #dataset_list = ['meta_material','robotic_arm','sine_wave','ballistics']
+dataset_list = ["robotic_arm","ballistics"]
 data_num = 500
 trail_num = 2048
 
 # Where to steal the Xtruth, Ytruth file (This function can not produce Xtruth and Ytruth as it is just a random generator. However the evaluation needs a Xtruth and Ytruth file, therefore we are just going to steal the Truth files from the neighbouring folder
-truth_folder = '/work/sr365/ICML_mm/cINN_BP_on_FF_on/'
-#truth_folder = '/work/sr365/ICML_exp_1218/cINN_BP_on_FF_on/'
+#truth_folder = '/work/sr365/ICML_mm/cINN_BP_off_FF_off/'
+truth_folder = '/work/sr365/ICML_exp/cINN_BP_off_FF_off/'
 
 def generate_sine_wave(data_num):
     return np.random.uniform(size=(data_num,2), low=-1, high=1)
@@ -52,9 +52,12 @@ if __name__ == '__main__':
                 if not check_if_empty_folder(os.path.join(folder, dataset)):
                     print("This folder is not empty, therefore random generated solution function is skipping it", os.path.join(folder,dataset))
                     continue;
-                # Skip MM for now ONLY
-                if 'meta_material' not in dataset:
+                elif 'on' in folder:
+                    print("Current version the generate would only generate solutions for the baseline off off version, therefore skipping any folder with on", folder)
                     continue;
+                # Skip MM for now ONLY
+                #if 'meta_material' not in dataset:
+                #    continue;
                 output_dir = os.path.join(folder, dataset)
                 if dataset == 'meta_material':
                     generator = generate_meta_material

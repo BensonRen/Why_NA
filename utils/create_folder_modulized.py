@@ -3,10 +3,10 @@
 
 import os
 import numpy
-
+import shutil
 # Where to create the folders, assume here
-create_directory_folder = '/work/sr365/ICML_mm/'
-#create_directory_folder = '/work/sr365/ICML_exp_1231/'
+#create_directory_folder = '/work/sr365/ICML_mm/'
+create_directory_folder = '/work/sr365/ICML_exp/'
 # If testing_mode on, only one folder would be in the list: cINN_on_on/robotic
 testing_mode = False
 
@@ -14,10 +14,10 @@ testing_mode = False
 #dataset_list = ['meta_material']
 dataset_list = ['meta_material','robotic_arm','sine_wave','ballistics']
 initializer_list = ['Random','cINN','INN','VAE','MDN']
-#optimizer_list = ['BP_off']
-#filter_list = ['FF_off']
-optimizer_list = ['BP_on','BP_off']
-filter_list = ['FF_on','FF_off']
+optimizer_list_base = ['BP_off']
+filter_list_base = ['FF_off']
+optimizer_list_full = ['BP_on','BP_off']
+filter_list_full = ['FF_on','FF_off']
 
 def get_folder_modulized(gpu=None):
     """
@@ -30,8 +30,8 @@ def get_folder_modulized(gpu=None):
         folder_list.append(os.path.join(create_directory_folder, 'VAE_BP_on_FF_off'))
         return folder_list
     for init in initializer_list:
-        for opti in optimizer_list:
-            for fil in filter_list:
+        for opti in optimizer_list_full:
+            for fil in filter_list_full:
                 # Create the method_crossed folder
                 path = os.path.join(create_directory_folder, init + '_' + opti + '_' + fil)
                 folder_list.append(path)
@@ -70,11 +70,35 @@ def check_modulized_yet(data_dir):
     return False
         
 
-
-if __name__ == '__main__':
+def duplicate_off_off_base_folders():
+    """
+    The function that calls cp -r in bash script to copy the folders so that there only need to be one set of evaluation generated.
+    """
     for init in initializer_list:
-        for opti in optimizer_list:
-            for fil in filter_list:
+        for opti in optimizer_list_full:
+            for fil in filter_list_full:
+                dest_path = os.path.join(create_directory_folder, init + '_' + opti + '_' + fil)
+                src_path = os.path.join(create_directory_folder, init + '_BP_off_FF_off') 
+                # If this is already copied, skip this folder
+                if os.path.isdir(dest_path):
+                    continue;
+                try:
+                    shutil.copytree(src_path, dest_path)
+                except shutil.Error as e:
+                    print('Directory not copied. Error: %s' %e, dest_path)
+                except OSError as e:
+                    print('Directory not copied. Error: %s' %e, dest_path)
+                
+
+def main():
+    # Only activate this line if you finished creating base inference
+    #duplicate_off_off_base_folders()
+    #return
+    
+    #Main function of create folder
+    for init in initializer_list:
+        for opti in optimizer_list_base:
+            for fil in filter_list_base:
                 # Create the method_crossed folder
                 path = os.path.join(create_directory_folder, init + '_' + opti + '_' + fil)
                 if not os.path.exists(path):
@@ -84,3 +108,8 @@ if __name__ == '__main__':
                     data_set_path = os.path.join(path, data)
                     if not os.path.exists(data_set_path):
                         os.makedirs(data_set_path)
+
+
+
+if __name__ == '__main__':
+    main()

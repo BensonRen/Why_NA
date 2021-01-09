@@ -4,7 +4,7 @@ import numpy
 # This is the program to delete all the duplicate Xtruth Ytruth files generated
 #input_dir = '/work/sr365/multi_eval/'                # NIPS code version
 #input_dir = '/work/sr365/multi_eval/'                # NIPS code version
-input_dir = '/work/sr365/ICML_exp_1231/'                # ICML code version
+input_dir = '/work/sr365/ICML_exp/'                # ICML code version
 #input_dir = '/work/sr365/ICML_mm/'                # ICML code version --- MM special
 delete_mse_file_mode = False                            # Deleting the mse file for the forward filtering
 
