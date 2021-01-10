@@ -49,11 +49,11 @@ if __name__ == '__main__':
             # Start generating the Xpred files, loop over the methods
             for dataset in dataset_list:
                 print("currently in folder", folder," -  ", dataset)
-                if not check_if_empty_folder(os.path.join(folder, dataset)):
-                    print("This folder is not empty, therefore random generated solution function is skipping it", os.path.join(folder,dataset))
-                    continue;
-                elif 'on' in folder:
+                if 'on' in folder:
                     print("Current version the generate would only generate solutions for the baseline off off version, therefore skipping any folder with on", folder)
+                    continue;
+                elif not check_if_empty_folder(os.path.join(folder, dataset)):
+                    print("This folder is not empty, therefore random generated solution function is skipping it", os.path.join(folder,dataset))
                     continue;
                 # Skip MM for now ONLY
                 #if 'meta_material' not in dataset:

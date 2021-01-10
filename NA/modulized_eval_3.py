@@ -111,8 +111,8 @@ def modulized_evaluate_different_dataset(gpu=None):
         #if 'Random' not in folder:
         #    continue;
         BP, FF = get_state_of_BP_FF(folder)
-        # Nothing is needed if both of them are False
-        if BP is False and FF is False:
+        # In the new version, if no FF then we can skip. All of them share the same 
+        if FF is False:
             continue;
         print("currently working on folder", folder)
         # Work on each dataset

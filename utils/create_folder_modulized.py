@@ -92,8 +92,8 @@ def duplicate_off_off_base_folders():
 
 def main():
     # Only activate this line if you finished creating base inference
-    #duplicate_off_off_base_folders()
-    #return
+    duplicate_off_off_base_folders()
+    return
     
     #Main function of create folder
     for init in initializer_list:

@@ -222,174 +222,187 @@ class Network(object):
 
             # Learning rate decay upon plateau
             self.lr_scheduler.step(train_avg_loss)
-            #self.log.close()
-            tk.record(1)                    # Record at the end of the training
+        #self.log.close()
+        tk.record(1)                    # Record at the end of the training
 
-        def modulized_bp_ff(self, X_init_mat, Ytruth, FF, save_dir='data/', save_all=True):
-            """
-            The "evaluation" function for the modulized backprop and forward filtering. It takes the X_init_mat as the different initializations of the X values and do evaluate function on that instead of taking evaluation data from the data loader
-            :param X_init_mat: The input initialization of X positions, numpy array of shape (#init, #point, #xdim) usually (2048, 1000, xdim)
-            :param Yturth: The Ytruth numpy array of shape (#point, #ydim)
-            :param save_dir: The directory to save the results
-            :param FF(forward_filtering): The flag to control whether use forward filtering or not
-            """
-            self.load()                             # load the model as constructed
-            try:
-                bs = self.flags.backprop_step         # for previous code that did not incorporate this
-            except AttributeError:
-                print("There is no attribute backprop_step, catched error and adding this now")
-                self.flags.backprop_step = 300
-            cuda = True if torch.cuda.is_available() else False
-            if cuda:
-                self.model.cuda()
-            self.model.eval()
-            saved_model_str = self.saved_model.replace('/','_')
+    def modulized_bp_ff(self, X_init_mat, Ytruth, FF, save_dir='data/', save_all=True):
+        """
+        The "evaluation" function for the modulized backprop and forward filtering. It takes the X_init_mat as the different initializations of the X values and do evaluate function on that instead of taking evaluation data from the data loader
+        :param X_init_mat: The input initialization of X positions, numpy array of shape (#init, #point, #xdim) usually (2048, 1000, xdim)
+        :param Yturth: The Ytruth numpy array of shape (#point, #ydim)
+        :param save_dir: The directory to save the results
+        :param FF(forward_filtering): The flag to control whether use forward filtering or not
+        """
+        self.load()                             # load the model as constructed
+        try:
+            bs = self.flags.backprop_step         # for previous code that did not incorporate this
+        except AttributeError:
+            print("There is no attribute backprop_step, catched error and adding this now")
+            self.flags.backprop_step = 300
+        cuda = True if torch.cuda.is_available() else False
+        if cuda:
+            self.model.cuda()
+        self.model.eval()
+        saved_model_str = self.saved_model.replace('/','_')
 
-            # Prepare Ytruth into tensor
-            Yt = self.build_tensor(Ytruth, requires_grad=False)
-            print("shape of Yt in modulized bp ff is:", Yt.size())
-            print("shape of the X_init_mat is:", np.shape(X_init_mat))
-            # Loop through #points
-            for ind in range(np.shape(X_init_mat)[1]):
-                Xpred, Ypred, loss = self.evaluate_one(Yt[ind,:], save_dir=save_dir, save_all=save_all, ind=ind, init_from_Xpred=X_init_mat[:,ind,:], FF=FF)
-            return None
-                
-
-        def evaluate(self, save_dir='data/', save_all=False, MSE_Simulator=False, save_misc=False, save_Simulator_Ypred=True):
-            """
-            The function to evaluate how good the Neural Adjoint is and output results
-            :param save_dir: The directory to save the results
-            :param save_all: Save all the results instead of the best one (T_200 is the top 200 ones)
-            :param MSE_Simulator: Use simulator loss to sort (DO NOT ENABLE THIS, THIS IS OK ONLY IF YOUR APPLICATION IS FAST VERIFYING)
-            :param save_misc: save all the details that are probably useless
-            :param save_Simulator_Ypred: Save the Ypred that the Simulator gives
-            (This is useful as it gives us the true Ypred instead of the Ypred that the network "thinks" it gets, which is
-            usually inaccurate due to forward model error)
-            :return:
-            """
-            self.load()                             # load the model as constructed
-            try:
-                bs = self.flags.backprop_step         # for previous code that did not incorporate this
-            except AttributeError:
-                print("There is no attribute backprop_step, catched error and adding this now")
-                self.flags.backprop_step = 300
-            cuda = True if torch.cuda.is_available() else False
-            if cuda:
-                self.model.cuda()
-            self.model.eval()
-            saved_model_str = self.saved_model.replace('/','_')
-            # Get the file names
-            Ypred_file = os.path.join(save_dir, 'test_Ypred_{}.csv'.format(saved_model_str))
-            Xtruth_file = os.path.join(save_dir, 'test_Xtruth_{}.csv'.format(saved_model_str))
-            Ytruth_file = os.path.join(save_dir, 'test_Ytruth_{}.csv'.format(saved_model_str))
-            Xpred_file = os.path.join(save_dir, 'test_Xpred_{}.csv'.format(saved_model_str))
-            print("evalution output pattern:", Ypred_file)
-
-            # Time keeping
-            tk = time_keeper(time_keeping_file=os.path.join(save_dir, 'evaluation_time.txt'))
-
-            # Open those files to append
-            with open(Xtruth_file, 'a') as fxt,open(Ytruth_file, 'a') as fyt,\
-                    open(Ypred_file, 'a') as fyp, open(Xpred_file, 'a') as fxp:
-                # Loop through the eval data and evaluate
-                for ind, (geometry, spectra) in enumerate(self.test_loader):
-                    if cuda:
-                        geometry = geometry.cuda()
-                        spectra = spectra.cuda()
-                    # Initialize the geometry first
-                    Xpred, Ypred, loss = self.evaluate_one(spectra, save_dir=save_dir, save_all=save_all, ind=ind,
-                                                            MSE_Simulator=MSE_Simulator, save_misc=save_misc, save_Simulator_Ypred=save_Simulator_Ypred)
-                    tk.record(ind)                          # Keep the time after each evaluation for backprop
-                    # self.plot_histogram(loss, ind)                                # Debugging purposes
-                    np.savetxt(fxt, geometry.cpu().data.numpy())
-                    np.savetxt(fyt, spectra.cpu().data.numpy())
-                    if self.flags.data_set != 'meta_material':
-                        np.savetxt(fyp, Ypred)
-                    np.savetxt(fxp, Xpred)
-            return Ypred_file, Ytruth_file
-
-        def evaluate_one(self, target_spectra, save_dir='data/', MSE_Simulator=False ,save_all=False, ind=None, save_misc=False, save_Simulator_Ypred=True, init_from_Xpred=None, FF=True):
-            """
-            The function which being called during evaluation and evaluates one target y using # different trails
-            :param target_spectra: The target spectra/y to backprop to 
-            :param save_dir: The directory to save to when save_all flag is true
-            :param MSE_Simulator: Use Simulator Loss to get the best instead of the default NN output logit
-            :param save_all: The multi_evaluation where each trail is monitored (instad of the best) during backpropagation
-            :param ind: The index of this target_spectra in the batch
-            :param save_misc: The flag to print misc information for degbugging purposes, usually printed to best_mse
-            :return: Xpred_best: The 1 single best Xpred corresponds to the best Ypred that is being backproped 
-            :return: Ypred_best: The 1 singe best Ypred that is reached by backprop
-            :return: MSE_list: The list of MSE at the last stage
-            :param FF(forward_filtering): [default to be true for historical reason] The flag to control whether use forward filtering or not
-            """
-
-            # Initialize the geometry_eval or the initial guess xs
-            geometry_eval = self.initialize_geometry_eval(init_from_Xpred)
-            # Set up the learning schedule and optimizer
-            self.optm_eval = self.make_optimizer_eval(geometry_eval)#, optimizer_type='SGD')
-            self.lr_scheduler = self.make_lr_scheduler(self.optm_eval)
+        # Prepare Ytruth into tensor
+        Yt = self.build_tensor(Ytruth, requires_grad=False)
+        print("shape of Yt in modulized bp ff is:", Yt.size())
+        print("shape of the X_init_mat is:", np.shape(X_init_mat))
+        # Loop through #points
+        for ind in range(np.shape(X_init_mat)[1]):
+            Xpred, Ypred, loss = self.evaluate_one(Yt[ind,:], save_dir=save_dir, save_all=save_all, ind=ind, init_from_Xpred=X_init_mat[:,ind,:], FF=FF)
+        return None
             
-            # expand the target spectra to eval batch size
-            target_spectra_expand = target_spectra.expand([self.flags.eval_batch_size, -1])
 
-            # Begin NA
-            for i in range(self.flags.backprop_step):
-                # Make the initialization from [-1, 1], can only be in loop due to gradient calculator constraint
-                if init_from_Xpred is None:
-                    geometry_eval_input = self.initialize_from_uniform_to_dataset_distrib(geometry_eval)
-                else:
-                    geometry_eval_input = geometry_eval
-                #if save_misc and ind == 0 and i == 0:                       # save the modified initial guess to verify distribution
-                #    np.savetxt('geometry_initialization.csv',geometry_eval_input.cpu().data.numpy())
-                self.optm_eval.zero_grad()                                  # Zero the gradient first
-                logit = self.model(geometry_eval_input)                     # Get the output
-                ###################################################
-                # Boundar loss controled here: with Boundary Loss #
-                ###################################################
-                loss = self.make_loss(logit, target_spectra_expand, G=geometry_eval_input)         # Get the loss
-                loss.backward()                                             # Calculate the Gradient
-                # update weights and learning rate scheduler
-                if i != self.flags.backprop_step - 1:
-                    self.optm_eval.step()  # Move one step the optimizer
-                    self.lr_scheduler.step(loss.data)
-            
-            if save_all:                # If saving all the results together instead of the first one
-                ##############################################################
-                # Choose the top "trail_nums" points from NA solutions #
-                ##############################################################
-                mse_loss = np.reshape(np.sum(np.square(logit.cpu().data.numpy() - target_spectra_expand.cpu().data.numpy()), axis=1), [-1, 1])
-                mse_loss = np.concatenate((mse_loss, np.reshape(np.arange(self.flags.eval_batch_size), [-1, 1])), axis=1)
-                if FF: # If the forward filtering function is activated (Default yes in NA)
-                    loss_sort = mse_loss[mse_loss[:, 0].argsort(kind='mergesort')]                         # Sort the loss list
-                else:
-                    loss_sort = mse_loss
-                exclude_top = 0
-                trail_nums = 1000
-                good_index = loss_sort[exclude_top:trail_nums+exclude_top, 1].astype('int')                        # Get the indexs
-                #print("In save all funciton, the top 10 index is:", good_index[:10])
-                if init_from_Xpred is None:
-                    saved_model_str = self.saved_model.replace('/', '_') + 'inference' + str(ind)
-                else:
-                    saved_model_str = self.saved_model.replace('/', '_') + 'modulized_inference' + str(ind)
-                Ypred_file = os.path.join(save_dir, 'test_Ypred_point{}.csv'.format(saved_model_str))
-                Xpred_file = os.path.join(save_dir, 'test_Xpred_point{}.csv'.format(saved_model_str))
-                if self.flags.data_set != 'meta_material':  # This is for meta-meterial dataset, since it does not have a simple simulator
-                    # 2 options: simulator/logit
-                    Ypred = simulator(self.flags.data_set, geometry_eval_input.cpu().data.numpy())
-                    if not save_Simulator_Ypred:            # The default is the simulator Ypred output
-                        Ypred = logit.cpu().data.numpy()
-                    if len(np.shape(Ypred)) == 1:           # If this is the ballistics dataset where it only has 1d y'
-                        Ypred = np.reshape(Ypred, [-1, 1])
-                    with open(Xpred_file, 'a') as fxp, open(Ypred_file, 'a') as fyp:
-                        np.savetxt(fyp, Ypred[good_index, :])
-                        np.savetxt(fxp, geometry_eval_input.cpu().data.numpy()[good_index, :])
-                else:
-                    with open(Xpred_file, 'a') as fxp:
-                        np.savetxt(fxp, geometry_eval_input.cpu().data.numpy()[good_index, :])
-            ###################################
-            # From candidates choose the best #
-            ###################################
-            Ypred = logit.cpu().data.numpy()
+    def evaluate(self, save_dir='data/', save_all=False, MSE_Simulator=False, save_misc=False, save_Simulator_Ypred=True):
+        """
+        The function to evaluate how good the Neural Adjoint is and output results
+        :param save_dir: The directory to save the results
+        :param save_all: Save all the results instead of the best one (T_200 is the top 200 ones)
+        :param MSE_Simulator: Use simulator loss to sort (DO NOT ENABLE THIS, THIS IS OK ONLY IF YOUR APPLICATION IS FAST VERIFYING)
+        :param save_misc: save all the details that are probably useless
+        :param save_Simulator_Ypred: Save the Ypred that the Simulator gives
+        (This is useful as it gives us the true Ypred instead of the Ypred that the network "thinks" it gets, which is
+        usually inaccurate due to forward model error)
+        :return:
+        """
+        self.load()                             # load the model as constructed
+        try:
+            bs = self.flags.backprop_step         # for previous code that did not incorporate this
+        except AttributeError:
+            print("There is no attribute backprop_step, catched error and adding this now")
+            self.flags.backprop_step = 300
+        cuda = True if torch.cuda.is_available() else False
+        if cuda:
+            self.model.cuda()
+        self.model.eval()
+        saved_model_str = self.saved_model.replace('/','_')
+        # Get the file names
+        Ypred_file = os.path.join(save_dir, 'test_Ypred_{}.csv'.format(saved_model_str))
+        Xtruth_file = os.path.join(save_dir, 'test_Xtruth_{}.csv'.format(saved_model_str))
+        Ytruth_file = os.path.join(save_dir, 'test_Ytruth_{}.csv'.format(saved_model_str))
+        Xpred_file = os.path.join(save_dir, 'test_Xpred_{}.csv'.format(saved_model_str))
+        print("evalution output pattern:", Ypred_file)
+
+        # Time keeping
+        tk = time_keeper(time_keeping_file=os.path.join(save_dir, 'evaluation_time.txt'))
+
+        # Open those files to append
+        with open(Xtruth_file, 'a') as fxt,open(Ytruth_file, 'a') as fyt,\
+                open(Ypred_file, 'a') as fyp, open(Xpred_file, 'a') as fxp:
+            # Loop through the eval data and evaluate
+            for ind, (geometry, spectra) in enumerate(self.test_loader):
+                if cuda:
+                    geometry = geometry.cuda()
+                    spectra = spectra.cuda()
+                # Initialize the geometry first
+                Xpred, Ypred, loss = self.evaluate_one(spectra, save_dir=save_dir, save_all=save_all, ind=ind,
+                                                        MSE_Simulator=MSE_Simulator, save_misc=save_misc, save_Simulator_Ypred=save_Simulator_Ypred)
+                tk.record(ind)                          # Keep the time after each evaluation for backprop
+                # self.plot_histogram(loss, ind)                                # Debugging purposes
+                np.savetxt(fxt, geometry.cpu().data.numpy())
+                np.savetxt(fyt, spectra.cpu().data.numpy())
+                if self.flags.data_set != 'meta_material':
+                    np.savetxt(fyp, Ypred)
+                np.savetxt(fxp, Xpred)
+        return Ypred_file, Ytruth_file
+
+    def evaluate_one(self, target_spectra, save_dir='data/', MSE_Simulator=False ,save_all=False, ind=None, save_misc=False, save_Simulator_Ypred=True, init_from_Xpred=None, FF=True):
+        """
+        The function which being called during evaluation and evaluates one target y using # different trails
+        :param target_spectra: The target spectra/y to backprop to 
+        :param save_dir: The directory to save to when save_all flag is true
+        :param MSE_Simulator: Use Simulator Loss to get the best instead of the default NN output logit
+        :param save_all: The multi_evaluation where each trail is monitored (instad of the best) during backpropagation
+        :param ind: The index of this target_spectra in the batch
+        :param save_misc: The flag to print misc information for degbugging purposes, usually printed to best_mse
+        :return: Xpred_best: The 1 single best Xpred corresponds to the best Ypred that is being backproped 
+        :return: Ypred_best: The 1 singe best Ypred that is reached by backprop
+        :return: MSE_list: The list of MSE at the last stage
+        :param FF(forward_filtering): [default to be true for historical reason] The flag to control whether use forward filtering or not
+        """
+
+        # Initialize the geometry_eval or the initial guess xs
+        geometry_eval = self.initialize_geometry_eval(init_from_Xpred)
+        # Set up the learning schedule and optimizer
+        self.optm_eval = self.make_optimizer_eval(geometry_eval)#, optimizer_type='SGD')
+        self.lr_scheduler = self.make_lr_scheduler(self.optm_eval)
+        
+        # expand the target spectra to eval batch size
+        target_spectra_expand = target_spectra.expand([self.flags.eval_batch_size, -1])
+
+        # Begin NA
+        for i in range(self.flags.backprop_step):
+            # Make the initialization from [-1, 1], can only be in loop due to gradient calculator constraint
+            if init_from_Xpred is None:
+                geometry_eval_input = self.initialize_from_uniform_to_dataset_distrib(geometry_eval)
+            else:
+                geometry_eval_input = geometry_eval
+            #if save_misc and ind == 0 and i == 0:                       # save the modified initial guess to verify distribution
+            #    np.savetxt('geometry_initialization.csv',geometry_eval_input.cpu().data.numpy())
+            self.optm_eval.zero_grad()                                  # Zero the gradient first
+            logit = self.model(geometry_eval_input)                     # Get the output
+            ###################################################
+            # Boundar loss controled here: with Boundary Loss #
+            ###################################################
+            loss = self.make_loss(logit, target_spectra_expand, G=geometry_eval_input)         # Get the loss
+            loss.backward()                                             # Calculate the Gradient
+            # update weights and learning rate scheduler
+            if i != self.flags.backprop_step - 1:
+                self.optm_eval.step()  # Move one step the optimizer
+                self.lr_scheduler.step(loss.data)
+        
+        if save_all:                # If saving all the results together instead of the first one
+            ##############################################################
+            # Choose the top "trail_nums" points from NA solutions #
+            ##############################################################
+            mse_loss = np.reshape(np.sum(np.square(logit.cpu().data.numpy() - target_spectra_expand.cpu().data.numpy()), axis=1), [-1, 1])
+            # The strategy of re-using the BPed result. Save two versions of file: one with FF and one without
+            mse_loss = np.concatenate((mse_loss, np.reshape(np.arange(self.flags.eval_batch_size), [-1, 1])), axis=1)
+            loss_sort = mse_loss[mse_loss[:, 0].argsort(kind='mergesort')]                         # Sort the loss list
+            loss_sort_FF_off = mse_loss
+            exclude_top = 0
+            trail_nums = 1000
+            good_index = loss_sort[exclude_top:trail_nums+exclude_top, 1].astype('int')                        # Get the indexs
+            good_index_FF_off = loss_sort_FF_off[exclude_top:trail_nums+exclude_top, 1].astype('int')                        # Get the indexs
+            #print("In save all funciton, the top 10 index is:", good_index[:10])
+            if init_from_Xpred is None:
+                saved_model_str = self.saved_model.replace('/', '_') + 'inference' + str(ind)
+            else:
+                saved_model_str = self.saved_model.replace('/', '_') + 'modulized_inference' + str(ind)
+            Ypred_file = os.path.join(save_dir, 'test_Ypred_point{}.csv'.format(saved_model_str))
+            Xpred_file = os.path.join(save_dir, 'test_Xpred_point{}.csv'.format(saved_model_str))
+            if 'BP_on_FF_on' in saved_model_str:
+                # The strategy of re-using the BPed result. Save two versions of file: one with FF and one without
+                save_model_str_FF_off = saved_model_str.replace('BP_on_FF_on', 'BP_on_FF_off')
+                Ypred_file_FF_off = Ypred_file.replace('BP_on_FF_on', 'BP_on_FF_off')
+                Xpred_file_FF_off = Xpred_file.replace('BP_on_FF_on', 'BP_on_FF_off')
+            if self.flags.data_set != 'meta_material':  # This is for meta-meterial dataset, since it does not have a simple simulator
+                # 2 options: simulator/logit
+                Ypred = simulator(self.flags.data_set, geometry_eval_input.cpu().data.numpy())
+                if not save_Simulator_Ypred:            # The default is the simulator Ypred output
+                    Ypred = logit.cpu().data.numpy()
+                if len(np.shape(Ypred)) == 1:           # If this is the ballistics dataset where it only has 1d y'
+                    Ypred = np.reshape(Ypred, [-1, 1])
+                with open(Xpred_file, 'a') as fxp, open(Ypred_file, 'a') as fyp:
+                    np.savetxt(fyp, Ypred[good_index, :])
+                    np.savetxt(fxp, geometry_eval_input.cpu().data.numpy()[good_index, :])
+                if 'BP_on_FF_on' in saved_model_str:
+                    with open(Xpred_file_FF_off, 'a') as fxp, open(Ypred_file_FF_off, 'a') as fyp:
+                        np.savetxt(fyp, Ypred[good_index_FF_off, :])
+                        np.savetxt(fxp, geometry_eval_input.cpu().data.numpy()[good_index_FF_off, :])
+            else:
+                with open(Xpred_file, 'a') as fxp:
+                    np.savetxt(fxp, geometry_eval_input.cpu().data.numpy()[good_index, :])
+                if 'BP_on_FF_on' in saved_model_str:
+                    with open(Xpred_file_FF_off, 'a') as fxp:
+                        np.savetxt(fxp, geometry_eval_input.cpu().data.numpy()[good_index_FF_off, :])
+
+        ###################################
+        # From candidates choose the best #
+        ###################################
+        Ypred = logit.cpu().data.numpy()
 
         if len(np.shape(Ypred)) == 1:           # If this is the ballistics dataset where it only has 1d y'
             Ypred = np.reshape(Ypred, [-1, 1])

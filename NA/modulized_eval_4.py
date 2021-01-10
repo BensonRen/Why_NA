@@ -104,15 +104,16 @@ def modulized_evaluate_different_dataset(gpu=None):
     """
     This function is to evaluate all different datasets in the model with one function call
     """
-    data_set_list = ["robotic_arm","sine_wave","ballistics"]
+    #data_set_list = ["robotic_arm","sine_wave","ballistics"]
+    data_set_list = ["robotic_arm","ballistics"]
     folder_list = get_folder_modulized(gpu=gpu)
     for folder in folder_list:
         # Skip Random for now
         #if 'Random' not in folder:
         #    continue;
         BP, FF = get_state_of_BP_FF(folder)
-        # Nothing is needed if both of them are False
-        if BP is False and FF is False:
+        # In the new version, if no FF then we can skip. All of them share the same 
+        if FF is False:
             continue;
         print("currently working on folder", folder)
         # Work on each dataset

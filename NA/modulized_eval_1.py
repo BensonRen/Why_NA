@@ -9,7 +9,7 @@ sys.path.append('../utils/')
 
 # Own
 import flag_reader
-from class_wrapper import Network
+from NA.class_wrapper import Network
 from model_maker import NA
 from utils import data_reader
 from utils.helper_functions import load_flags
@@ -105,15 +105,16 @@ def modulized_evaluate_different_dataset(gpu=None):
     This function is to evaluate all different datasets in the model with one function call
     """
     #data_set_list = ["meta_material"]
-    data_set_list = ["robotic_arm","sine_wave","ballistics"]
+    data_set_list = ["robotic_arm","ballistics"]
+    #data_set_list = ["robotic_arm","sine_wave","ballistics"]
     folder_list = get_folder_modulized(gpu=gpu)
     for folder in folder_list:
         # Skip Random for now
         #if 'Random' not in folder:
         #    continue;
         BP, FF = get_state_of_BP_FF(folder)
-        # Nothing is needed if both of them are False
-        if BP is False and FF is False:
+        # In the new version, if no FF then we can skip. All of them share the same 
+        if FF is False:
             continue;
         print("currently working on folder", folder)
         # Work on each dataset
