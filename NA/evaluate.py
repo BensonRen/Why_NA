@@ -96,7 +96,7 @@ def evaluate_different_dataset(multi_flag, eval_data_all, save_Simulator_Ypred=F
      #data_set_list = ["robotic_arm","sine_wave","ballistics","meta_material"]
      data_set_list = ["robotic_arm", "ballistics"]
      for eval_model in data_set_list:
-        for j in range(1,2):
+        for j in range(3):
             useless_flags = flag_reader.read_flag()
             useless_flags.eval_model = "retrain" + str(j) + eval_model
             evaluate_from_model(useless_flags.eval_model, multi_flag=multi_flag, eval_data_all=eval_data_all, save_Simulator_Ypred=save_Simulator_Ypred, MSE_Simulator=MSE_Simulator)
@@ -105,14 +105,17 @@ def evaluate_trail_BDY_lr(multi_flag, eval_data_all, save_Simulator_Ypred=False,
      """
      This function is to evaluate all different datasets in the model with one function call
      """
-     lr_list = [1,0.5,0.1]
-     BDY_list = [100,10,1,0.1]
-     data_set_list = ["robotic_arm", "ballistics"]
+     #lr_list = [2, 1,0.5,0.1]
+     lr_list = [0.5]
+     #BDY_list = [0]
+     BDY_list = [ 1,0.1,0]
+     data_set_list = ["ballistics"]
+     #data_set_list = ["robotic_arm", "ballistics"]
      for eval_model in data_set_list:
         for lr in lr_list:
             for BDY in BDY_list:
                 useless_flags = flag_reader.read_flag()
-                useless_flags.eval_model = "retrain1" + eval_model
+                useless_flags.eval_model = "retrain5" + eval_model
                 evaluate_from_model(useless_flags.eval_model, multi_flag=multi_flag, eval_data_all=eval_data_all, save_Simulator_Ypred=save_Simulator_Ypred, MSE_Simulator=MSE_Simulator, init_lr = lr, BDY_strength=BDY)
 
 if __name__ == '__main__':
@@ -123,7 +126,7 @@ if __name__ == '__main__':
     # different dataset #
     #####################
     # This is to run the single evaluation, please run this first to make sure the current model is well-trained before going to the multiple evaluation code below
-    #evaluate_different_dataset(multi_flag=False, eval_data_all=False, save_Simulator_Ypred=True, MSE_Simulator=False)
+    evaluate_different_dataset(multi_flag=False, eval_data_all=False, save_Simulator_Ypred=True, MSE_Simulator=False)
     # This is for multi evaluation for generating the Fig 3, evaluating the models under various T values
     #evaluate_different_dataset(multi_flag=True, eval_data_all=False, save_Simulator_Ypred=True, MSE_Simulator=False)
     
@@ -131,4 +134,4 @@ if __name__ == '__main__':
     
     
     # This is to test the BDY and LR effect of the NA method specially for Robo and Ballistics dataset, 2021.01.09 code trail for investigating why sometimes NA constrait the other methods
-    evaluate_trail_BDY_lr(multi_flag=True, eval_data_all=False, save_Simulator_Ypred=True, MSE_Simulator=False)
+    #evaluate_trail_BDY_lr(multi_flag=True, eval_data_all=False, save_Simulator_Ypred=True, MSE_Simulator=False)

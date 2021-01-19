@@ -53,7 +53,9 @@ class InverseBallisticsModel():
         y = np.random.randn(N, 1) * self.xy_std[1] + self.xy_mu[1]
         y = np.maximum(y, 0)
         angle = np.random.rand(N, 1) * np.pi/2 * 0.8 + np.pi/2 * 0.1
+        # In the original code there is no minimum function!!! This is exploratory for debugging purposes only!
         v0 = np.random.poisson(15, (N, 1))
+        #v0 = np.minimum(np.random.poisson(15, (N, 1)), 23)
         return np.concatenate([x, y, angle, v0], axis=1)
 
     def trajectories_from_parameters(self, x):
@@ -90,7 +92,7 @@ class InverseBallisticsModel():
     def forward_process(self, x, output_full=False):
         """
         :param output_full: Output the full_array where the shape is the same as input
-        The invalid ones would be filled with -1 and won't be calculated in the MSE calculation
+        The invalid ones would be filled with -999 and won't be calculated in the MSE calculation
         """
         #print("This is forward process, the shape of input x is:", np.shape(x))
         #print("The type of input x is:", type(x))

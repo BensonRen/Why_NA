@@ -831,11 +831,24 @@ def DrawEvaluationTime(data_dir, data_name, save_name='evaluation_time', logy=Fa
 
 if __name__ == '__main__':
     # NIPS version 
-    MeanAvgnMinMSEvsTry_all('/work/sr365/multi_eval/')
-    datasets = ['robotic_arm','ballistics']
+    #MeanAvgnMinMSEvsTry_all('/work/sr365/NA_compare/')
+    datasets = ['ballistics']
     #datasets = ['meta_material', 'robotic_arm','sine_wave','ballistics']
-    for dataset in datasets:
-        DrawAggregateMeanAvgnMSEPlot('/work/sr365/multi_eval/', dataset)
+    lr_list = ['lr1','lr0.5','lr0.05']
+    for lr in lr_list:
+        MeanAvgnMinMSEvsTry_all('/work/sr365/NA_compare/'+lr)
+        for dataset in datasets:
+            DrawAggregateMeanAvgnMSEPlot('/work/sr365/NA_compare/'+lr, dataset)
+            
+    #DrawAggregateMeanAvgnMSEPlot('/work/sr365/NA_compare/', 'ballistics')
+        
+    
+    # NIPS version 
+    #MeanAvgnMinMSEvsTry_all('/work/sr365/multi_eval/')
+    #datasets = ['robotic_arm','ballistics']
+    ##datasets = ['meta_material', 'robotic_arm','sine_wave','ballistics']
+    #for dataset in datasets:
+    #    DrawAggregateMeanAvgnMSEPlot('/work/sr365/multi_eval/', dataset)
     
     # NIPS version for INN robo
     #MeanAvgnMinMSEvsTry_all('/work/sr365/multi_eval/special/')
@@ -848,7 +861,8 @@ if __name__ == '__main__':
     # Modulized version (ICML)
     #algo_list = ['cINN','INN','VAE','MDN','Random'] 
     #for algo in algo_list:
-    #    MeanAvgnMinMSEvsTry_all('/work/sr365/ICML_exp_1218/' + algo + '/')
-    #    datasets = ['robotic_arm','sine_wave','ballistics']
+    #    MeanAvgnMinMSEvsTry_all('/work/sr365/ICML_exp/' + algo + '/')
+    #    datasets = ['robotic_arm','ballistics']
+    #    #datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
     #    for dataset in datasets:
-    #        DrawAggregateMeanAvgnMSEPlot('/work/sr365/ICML_exp_1218/'+algo+'/', dataset)
+    #        DrawAggregateMeanAvgnMSEPlot('/work/sr365/ICML_exp/'+algo+'/', dataset)

@@ -369,7 +369,7 @@ class Network(object):
         Make evaluation multiple times for deeper comparison for stochastic algorithm, also be part of the comparison of different modules (initializer, optimizer and filtering). This function provides a baseline result for the experiements
         """
         # Get the list of folders
-        folder_list = get_folder_modulized()
+        folder_list = get_folder_modulized(off_only=True)
 
         # evaluate for all the folders
         for folder in folder_list:

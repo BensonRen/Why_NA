@@ -19,7 +19,7 @@ filter_list_base = ['FF_off']
 optimizer_list_full = ['BP_on','BP_off']
 filter_list_full = ['FF_on','FF_off']
 
-def get_folder_modulized(gpu=None):
+def get_folder_modulized(gpu=None, off_only=False):
     """
     Get a list of all modulized folder in the ICML exp folder that stores the major results
     :param gpu: GPU number specified. GPU03 is 2080 and hence has more jobs than other GPUs. The split of GPU jobs workload can be seen at the Experiment_spreadsheet.
@@ -34,6 +34,8 @@ def get_folder_modulized(gpu=None):
             for fil in filter_list_full:
                 # Create the method_crossed folder
                 path = os.path.join(create_directory_folder, init + '_' + opti + '_' + fil)
+                if off_only and 'on' in path:
+                    continue;
                 folder_list.append(path)
     sub_list = []
     if gpu is None:
@@ -47,9 +49,19 @@ def get_folder_modulized(gpu=None):
     elif gpu == 2: # 1080 TI, speed = 1.55
         for folder in folder_list:
             if 'cINN' in folder or 'BP_off' in folder:
+                #####################################
+                # This is one-time for 01.18 18:19 #
+                #####################################
+                if 'Random' in folder:
+                    continue;
                 sub_list.append(folder)
     elif gpu == 3: # Titan X, speed = 1 but very very useful for all the meta-material
         for folder in folder_list:
+            #####################################
+            # This is one-time for 01.18 18:19 #
+            #####################################
+            if 'Random' in folder:
+                continue;
             sub_list.append(folder)
     elif gpu == 4: # 1080 TI, speed = 1.55
         for folder in folder_list:
@@ -112,4 +124,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    folders = get_folder_modulized(gpu=2, off_only=False)
+    for fod in folders:
+        print(fod)
+
+    #main()

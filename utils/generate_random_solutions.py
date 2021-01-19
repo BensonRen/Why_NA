@@ -10,9 +10,9 @@ from utils.create_folder_modulized import get_folder_modulized
 from utils.helper_functions import simulator
 from Simulated_DataSets.Meta_material_Neural_Simulator.generate_mm_x import generate_meta_material
 
-#dataset_list = ['meta_material','robotic_arm','sine_wave','ballistics']
-dataset_list = ["robotic_arm","ballistics"]
-data_num = 500
+dataset_list = ['meta_material','robotic_arm','sine_wave','ballistics']
+#dataset_list = ["robotic_arm","ballistics"]
+data_num = 200
 trail_num = 2048
 
 # Where to steal the Xtruth, Ytruth file (This function can not produce Xtruth and Ytruth as it is just a random generator. However the evaluation needs a Xtruth and Ytruth file, therefore we are just going to steal the Truth files from the neighbouring folder
@@ -41,7 +41,7 @@ def check_if_empty_folder(data_dir):
 
 if __name__ == '__main__':
     # Get the list of folders to generate
-    folders = get_folder_modulized()
+    folders = get_folder_modulized(off_only=True)
 
     for folder in folders:
         # Loop over only the random folders
