@@ -210,6 +210,9 @@ if __name__ == '__main__':
         #predict_ensemble_for_all('../Simulated_DataSets/Meta_material_Neural_Simulator/state_dicts/', '../multi_eval/'+ method + '/meta_material/', no_plot=True)  
 
     # This is for the modulized multi evaluation in the ICML_EXP folder
-    method_list_multi = get_folder_modulized()
-    for method in method_list_multi:
-        predict_ensemble_for_all('../Simulated_DataSets/Meta_material_Neural_Simulator/state_dicts/', os.path.join(method, 'meta_material/'), no_plot=True)  
+    #method_list_multi = get_folder_modulized()
+    #for method in method_list_multi:
+    #    predict_ensemble_for_all('../Simulated_DataSets/Meta_material_Neural_Simulator/state_dicts/', os.path.join(method, 'meta_material/'), no_plot=True)  
+
+
+    predict_from_model(pre_trained_model, Xpred_file, no_plot=True, load_state_dict=None)

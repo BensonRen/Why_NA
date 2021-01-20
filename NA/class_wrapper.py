@@ -379,7 +379,7 @@ class Network(object):
                 saved_model_str = self.saved_model.replace('/', '_') + 'modulized_inference' + str(ind)
             Ypred_file = os.path.join(save_dir, 'test_Ypred_point{}.csv'.format(saved_model_str))
             Xpred_file = os.path.join(save_dir, 'test_Xpred_point{}.csv'.format(saved_model_str))
-            if 'BP_on_FF_on' in saved_model_str:
+            if 'BP_on_FF_on' in save_dir:
                 # The strategy of re-using the BPed result. Save two versions of file: one with FF and one without
                 save_model_str_FF_off = saved_model_str.replace('BP_on_FF_on', 'BP_on_FF_off')
                 Ypred_file_FF_off = Ypred_file.replace('BP_on_FF_on', 'BP_on_FF_off')
@@ -394,14 +394,15 @@ class Network(object):
                 with open(Xpred_file, 'a') as fxp, open(Ypred_file, 'a') as fyp:
                     np.savetxt(fyp, Ypred[good_index, :])
                     np.savetxt(fxp, geometry_eval_input.cpu().data.numpy()[good_index, :])
-                if 'BP_on_FF_on' in saved_model_str:
+                if 'BP_on_FF_on' in save_dir:
+                    print("outputting files for FF_off as well")
                     with open(Xpred_file_FF_off, 'a') as fxp, open(Ypred_file_FF_off, 'a') as fyp:
                         np.savetxt(fyp, Ypred[good_index_FF_off, :])
                         np.savetxt(fxp, geometry_eval_input.cpu().data.numpy()[good_index_FF_off, :])
             else:
                 with open(Xpred_file, 'a') as fxp:
                     np.savetxt(fxp, geometry_eval_input.cpu().data.numpy()[good_index, :])
-                if 'BP_on_FF_on' in saved_model_str:
+                if 'BP_on_FF_on' in save_dir:
                     with open(Xpred_file_FF_off, 'a') as fxp:
                         np.savetxt(fxp, geometry_eval_input.cpu().data.numpy()[good_index_FF_off, :])
 

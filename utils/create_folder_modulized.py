@@ -49,19 +49,9 @@ def get_folder_modulized(gpu=None, off_only=False):
     elif gpu == 2: # 1080 TI, speed = 1.55
         for folder in folder_list:
             if 'cINN' in folder or 'BP_off' in folder:
-                #####################################
-                # This is one-time for 01.18 18:19 #
-                #####################################
-                if 'Random' in folder:
-                    continue;
                 sub_list.append(folder)
     elif gpu == 3: # Titan X, speed = 1 but very very useful for all the meta-material
         for folder in folder_list:
-            #####################################
-            # This is one-time for 01.18 18:19 #
-            #####################################
-            if 'Random' in folder:
-                continue;
             sub_list.append(folder)
     elif gpu == 4: # 1080 TI, speed = 1.55
         for folder in folder_list:
@@ -124,8 +114,8 @@ def main():
 
 
 if __name__ == '__main__':
-    folders = get_folder_modulized(gpu=2, off_only=False)
-    for fod in folders:
-        print(fod)
+    #folders = get_folder_modulized(gpu=2, off_only=False)
+    #for fod in folders:
+    #    print(fod)
 
-    #main()
+    main()
