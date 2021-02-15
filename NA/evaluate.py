@@ -50,6 +50,11 @@ def evaluate_from_model(model_dir, multi_flag=False, eval_data_all=False, save_m
     flags.eval_batch_size = eval_flags.eval_batch_size
     flags.train_step = eval_flags.train_step
 
+    # delete after usage: 02.07 for vilidating that ball and sine is convex problem
+    # Use a very small eval batch size and expected to see that meta and robo getting much worse performance
+    # and the ball and sine getting nearly identical one
+    # flags.eval_batch_size = 2
+
     print(flags)
 
     # Get the data
@@ -66,8 +71,13 @@ def evaluate_from_model(model_dir, multi_flag=False, eval_data_all=False, save_m
     # Evaluation process
     print("Start eval now:")
     if multi_flag:
-        dest_dir = '/work/sr365/NA_compare/lr' + str(flags.lr) + '_BDY_strength_' + str(flags.BDY_strength) + flags.data_set 
-        os.mkdir(dest_dir)
+        dest_dir = '/data/users/ben/multi_eval/NA/'
+        #dest_dir = '/data/users/ben/multi_eval/NA_lr' + str(init_lr)  + 'bdy_' + str(BDY_strength)+'/' 
+        if not os.path.isdir(dest_dir):
+            os.mkdir(dest_dir)
+        dest_dir += flags.data_set
+        if not os.path.isdir(dest_dir):
+            os.mkdir(dest_dir)
         #pred_file, truth_file = ntwk.evaluate(save_dir='/work/sr365/multi_eval/NA/' + flags.data_set, save_all=True,
         pred_file, truth_file = ntwk.evaluate(save_dir=dest_dir, save_all=True,
                                                 save_misc=save_misc, MSE_Simulator=MSE_Simulator,save_Simulator_Ypred=save_Simulator_Ypred)
@@ -93,10 +103,12 @@ def evaluate_different_dataset(multi_flag, eval_data_all, save_Simulator_Ypred=F
      """
      This function is to evaluate all different datasets in the model with one function call
      """
-     #data_set_list = ["robotic_arm","sine_wave","ballistics","meta_material"]
-     data_set_list = ["robotic_arm", "ballistics"]
+     data_set_list = ["robotic_arm","sine_wave","ballistics","meta_material"]
+     #data_set_list = ["robotic_arm","sine_wave","ballistics"]
+     #data_set_list = ["robotic_arm"]
+     #data_set_list = ["meta_material"]
      for eval_model in data_set_list:
-        for j in range(3):
+        for j in range(1):
             useless_flags = flag_reader.read_flag()
             useless_flags.eval_model = "retrain" + str(j) + eval_model
             evaluate_from_model(useless_flags.eval_model, multi_flag=multi_flag, eval_data_all=eval_data_all, save_Simulator_Ypred=save_Simulator_Ypred, MSE_Simulator=MSE_Simulator)
@@ -107,9 +119,9 @@ def evaluate_trail_BDY_lr(multi_flag, eval_data_all, save_Simulator_Ypred=False,
      """
      #lr_list = [2, 1,0.5,0.1]
      lr_list = [0.5]
-     #BDY_list = [0]
-     BDY_list = [ 1,0.1,0]
-     data_set_list = ["ballistics"]
+     BDY_list = [0.001]
+     #BDY_list = [0.05, 0.01, 0.001]
+     #data_set_list = ["robotic_arm"]
      #data_set_list = ["robotic_arm", "ballistics"]
      for eval_model in data_set_list:
         for lr in lr_list:
@@ -126,9 +138,9 @@ if __name__ == '__main__':
     # different dataset #
     #####################
     # This is to run the single evaluation, please run this first to make sure the current model is well-trained before going to the multiple evaluation code below
-    evaluate_different_dataset(multi_flag=False, eval_data_all=False, save_Simulator_Ypred=True, MSE_Simulator=False)
+    #evaluate_different_dataset(multi_flag=False, eval_data_all=False, save_Simulator_Ypred=True, MSE_Simulator=False)
     # This is for multi evaluation for generating the Fig 3, evaluating the models under various T values
-    #evaluate_different_dataset(multi_flag=True, eval_data_all=False, save_Simulator_Ypred=True, MSE_Simulator=False)
+    evaluate_different_dataset(multi_flag=True, eval_data_all=False, save_Simulator_Ypred=True, MSE_Simulator=False)
     
     
     

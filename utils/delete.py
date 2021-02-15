@@ -5,9 +5,13 @@ import numpy
 #input_dir = '/work/sr365/multi_eval/'                # NIPS code version
 #input_dir = '/work/sr365/multi_eval/'                # NIPS code version
 #input_dir = '/work/sr365/NA_compare/'                # ICML code version
-input_dir = '/work/sr365/ICML_exp/'                # ICML code version
+#input_dir = '/data/users/ben/robotic_stuck/retrain5/'                
+#input_dir = '/data/users/ben/multi_eval/'                
+#input_dir = '/work/sr365/ICML_exp/'                # ICML code version
+input_dir = '/data/users/ben/ICML_exp/'                #  I am Groot!
+#input_dir = '/data/users/ben/ICML_exp_mm/'                #  I am Groot!
 #input_dir = '/work/sr365/ICML_mm/'                # ICML code version --- MM special
-delete_mse_file_mode = False                            # Deleting the mse file for the forward filtering
+delete_mse_file_mode = True                            # Deleting the mse file for the forward filtering
 
 
 # For all the architectures

@@ -202,15 +202,27 @@ class Network(object):
                 ################
                 self.optm.zero_grad()                               # Zero the gradient first
                 ypred = self.model(x)                               # Get the Ypred
-
-
+                # 0122 added
+                xpred = self.model(y, rev=True)
+                
                 # Do the MSE loss for reconstruction, Doesn't compare z part (only pad and y itself)
                 MSE_loss_y = self.make_loss(logit=ypred[:, dim_z:], labels=y[:, dim_z:])
 
                 # Use the maximum likelihood method
                 log_det = self.model.log_jacobian(x=x)
                 #print("The log determinant is", log_det)
-                Forward_loss = 0.5 * (MSE_loss_y / self.flags.lambda_mse + torch.mean(torch.pow(z,2))) - torch.mean(log_det)
+
+                # Do some printing for each epoch
+                if j == 0:
+                    # MMD loss part
+                    MMD_loss = self.MMD(xpred[:, :dim_x], x[:, :dim_x]) 
+                    MMD_factor = loss_factor * self.flags.lambda_rev
+                    print("MMD_loss", MMD_loss.cpu().data.numpy())
+                    #print("MMD_factor", MMD_factor)
+                    # Print the log_det loss
+                    print("Log det loss: ", log_det.cpu().data )
+
+                Forward_loss = 0.5 * (MSE_loss_y / self.flags.lambda_mse + torch.mean(torch.pow(z,2))) - torch.mean(log_det)# + MMD_loss * MMD_factor
                 Forward_loss.backward()
 
                 ######################
@@ -342,16 +354,16 @@ class Network(object):
                 # Initialize the x first
                 Xpred = self.model(y_cat, rev=True)
                 Xpred = Xpred[:, :dim_x].cpu().data.numpy()
-                if self.flags.data_set != 'meta_material':          # Meta-material needs special handling due to no simulator
-                    Ypred = simulator(self.flags.data_set, Xpred)
-                    np.savetxt(fyp, Ypred)
                 np.savetxt(fxp, Xpred)
                 np.savetxt(fxt, x.cpu().data.numpy())
                 np.savetxt(fyt, y.cpu().data.numpy())
+                if self.flags.data_set != 'meta_material':          # Meta-material needs special handling due to no simulator
+                    Ypred = simulator(self.flags.data_set, Xpred)
+                    np.savetxt(fyp, Ypred)
             tk.record(1)
         return Ypred_file, Ytruth_file
 
-    def evaluate_multiple_time(self, time=200, save_dir='/work/sr365/multi_eval/INN/'):
+    def evaluate_multiple_time(self, time=200, save_dir='/data/users/ben/multi_eval/INN/'):
         """
         Make evaluation multiple time for deeper comparison for stochastic algorithms
         :param save_dir: The directory to save the result

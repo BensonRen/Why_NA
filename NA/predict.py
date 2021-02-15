@@ -149,6 +149,9 @@ def ensemble_predict_master(model_dir, Xpred_file, no_plot, plot_dir=None):
 def predict_ensemble_for_all(model_dir, Xpred_file_dirs, no_plot):
     for files in os.listdir(Xpred_file_dirs):
         if 'Xpred' in files and 'meta_material' in files:
+            # If this has already been predicted, skip this file!
+            if os.path.isfile(Xpred_file_dirs.replace('Xpred','Ypred')):
+                continue
             ensemble_predict_master(model_dir, os.path.join(Xpred_file_dirs, files), plot_dir=Xpred_file_dirs, no_plot=no_plot)
 
 def creat_mm_dataset():
@@ -201,6 +204,7 @@ if __name__ == '__main__':
     #for method in method_list:
     #    predict_ensemble_for_all('../Simulated_DataSets/Meta_material_Neural_Simulator/state_dicts/', '../'+ method + '/data/', no_plot=False)  
         
+    #predict_ensemble_for_all('../Simulated_DataSets/Meta_material_Neural_Simulator/state_dicts/', '/data/users/ben/multi_eval/NA/meta_material', no_plot=True)  
     
     # Multi evaluation in the multi_eval folder of each method
     #method_list_multi = ['INN']
@@ -208,11 +212,16 @@ if __name__ == '__main__':
     #for method in method_list_multi:
     #    predict_ensemble_for_all('../Simulated_DataSets/Meta_material_Neural_Simulator/state_dicts/', '/work/sr365/multi_eval/'+ method + '/meta_material/', no_plot=True)  
         #predict_ensemble_for_all('../Simulated_DataSets/Meta_material_Neural_Simulator/state_dicts/', '../multi_eval/'+ method + '/meta_material/', no_plot=True)  
-
+    
+    """
     # This is for the modulized multi evaluation in the ICML_EXP folder
-    #method_list_multi = get_folder_modulized()
-    #for method in method_list_multi:
-    #    predict_ensemble_for_all('../Simulated_DataSets/Meta_material_Neural_Simulator/state_dicts/', os.path.join(method, 'meta_material/'), no_plot=True)  
+    method_list_multi = get_folder_modulized(gpu=2)
+    for method in method_list_multi:
+        predict_ensemble_for_all('../Simulated_DataSets/Meta_material_Neural_Simulator/state_dicts/', os.path.join(method, 'meta_material/'), no_plot=True)  
+    """
 
 
-    predict_from_model(pre_trained_model, Xpred_file, no_plot=True, load_state_dict=None)
+    #predict_from_model("models/retrain0ballistics", 'data/Xpred_ball.csv', no_plot=False, load_state_dict=None)
+    #predict_from_model("models/retrain0robotic_arm", 'data/Xpred_robo.csv', no_plot=False, load_state_dict=None)
+    #predict_from_model("models/retrain0sine_wave", 'data/Xpred_sine.csv', no_plot=False, load_state_dict=None)
+    predict_from_model("models/retrain0meta_material", 'data/test_Xpred_retrain0meta_material.csv', no_plot=False, load_state_dict=None)

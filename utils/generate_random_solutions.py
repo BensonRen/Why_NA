@@ -10,23 +10,27 @@ from utils.create_folder_modulized import get_folder_modulized
 from utils.helper_functions import simulator
 from Simulated_DataSets.Meta_material_Neural_Simulator.generate_mm_x import generate_meta_material
 
-dataset_list = ['meta_material','robotic_arm','sine_wave','ballistics']
-#dataset_list = ["robotic_arm","ballistics"]
-data_num = 200
+#dataset_list = ['meta_material','robotic_arm','sine_wave','ballistics']
+#dataset_list = ['robotic_arm','sine_wave','ballistics']
+dataset_list = ["meta_material"]
+data_num = 1000
 trail_num = 2048
 
 # Where to steal the Xtruth, Ytruth file (This function can not produce Xtruth and Ytruth as it is just a random generator. However the evaluation needs a Xtruth and Ytruth file, therefore we are just going to steal the Truth files from the neighbouring folder
 #truth_folder = '/work/sr365/ICML_mm/cINN_BP_off_FF_off/'
-truth_folder = '/work/sr365/ICML_exp/cINN_BP_off_FF_off/'
+#truth_folder = '/work/sr365/ICML_exp/cINN_BP_off_FF_off/'
+
+# I am Groot!
+truth_folder = '/data/users/ben/ICML_exp_mm/cINN_BP_off_FF_off/'
 
 def generate_sine_wave(data_num):
     return np.random.uniform(size=(data_num,2), low=-1, high=1)
 
 def generate_ballistics(data_num):
     numpy_geometry = np.zeros([data_num, 4])
-    numpy_geometry[:, 0] = np.random.normal(0, 0.25, size=[data_num,])
-    numpy_geometry[:, 1] = np.random.normal(1.5, 0.25, size=[data_num,])
-    numpy_geometry[:, 2] = np.radians(np.random.uniform(9, 72, size=[data_num,]))
+    numpy_geometry[:, 0] = np.random.normal(0, 0.5, size=[data_num,])
+    numpy_geometry[:, 1] = np.max(np.random.normal(1.5, 0.5, size=[data_num,]), 0)
+    numpy_geometry[:, 2] = np.radians(np.random.uniform(9, 81, size=[data_num,]))
     numpy_geometry[:, 3] = np.random.poisson(15, size=[data_num,]) / 15
     return numpy_geometry
 

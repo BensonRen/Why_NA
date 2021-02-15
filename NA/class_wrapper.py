@@ -48,7 +48,7 @@ class Network(object):
         self.train_loader = train_loader                        # The train data loader
         self.test_loader = test_loader                          # The test data loader
         #self.log = SummaryWriter(self.ckpt_dir)                 # Create a summary writer for keeping the summary to the tensor board
-        if not os.path.isdir(self.ckpt_dir):
+        if not os.path.isdir(self.ckpt_dir) and not inference_mode:
             os.mkdir(self.ckpt_dir)
         self.best_validation_loss = float('inf')                # Set the BVL to large number
 
@@ -80,12 +80,15 @@ class Network(object):
         print(model)
         return model
 
-    def make_loss(self, logit=None, labels=None, G=None):
+    def make_loss(self, logit=None, labels=None, G=None, return_long=False):
         """
         Create a tensor that represents the loss. This is consistant both at training time \
         and inference time for Backward model
         :param logit: The output of the network
         :param labels: The ground truth labels
+        :param larger_BDY_penalty: For only filtering experiments, a larger BDY penalty is added
+        :param return_long: The flag to return a long list of loss in stead of a single loss value,
+                            This is for the forward filtering part to consider the loss
         :return: the total loss
         """
         if logit is None:
@@ -97,8 +100,13 @@ class Network(object):
             X_mean = (X_lower_bound + X_upper_bound) / 2        # Get the mean
             relu = torch.nn.ReLU()
             BDY_loss_all = 1 * relu(torch.abs(G - self.build_tensor(X_mean)) - 0.5 * self.build_tensor(X_range))
-            if self.flags.data_set != 'meta_material':
+            # Meta-material has a higher penalty
+            if self.flags.data_set == 'ballistics':
+                BDY_loss = 0.001*torch.sum(BDY_loss_all)
+            elif self.flags.data_set == 'sine_wave':
                 BDY_loss = 0.1*torch.sum(BDY_loss_all)
+            elif self.flags.data_set == 'robotic_arm':
+                BDY_loss = 0.01*torch.mean(BDY_loss_all)
             else:
                 BDY_loss = 10*torch.mean(BDY_loss_all)
             #BDY_loss = self.flags.BDY_strength*torch.sum(BDY_loss_all)
@@ -332,12 +340,15 @@ class Network(object):
         # Initialize the geometry_eval or the initial guess xs
         geometry_eval = self.initialize_geometry_eval(init_from_Xpred)
         # Set up the learning schedule and optimizer
-        self.optm_eval = self.make_optimizer_eval(geometry_eval)#, optimizer_type='SGD')
+        ######################################################
+        # 02.02 for emperically proff of NA bound, SGD optim #
+        ######################################################
+        self.optm_eval = self.make_optimizer_eval(geometry_eval , optimizer_type='SGD')
         self.lr_scheduler = self.make_lr_scheduler(self.optm_eval)
         
         # expand the target spectra to eval batch size
         target_spectra_expand = target_spectra.expand([self.flags.eval_batch_size, -1])
-
+        
         # Begin NA
         for i in range(self.flags.backprop_step):
             # Make the initialization from [-1, 1], can only be in loop due to gradient calculator constraint
@@ -363,10 +374,27 @@ class Network(object):
             ##############################################################
             # Choose the top "trail_nums" points from NA solutions #
             ##############################################################
+            # This is not ok because the filtering should take the boundary loss as well!
+            # Disabling the sorting!!
             mse_loss = np.reshape(np.sum(np.square(logit.cpu().data.numpy() - target_spectra_expand.cpu().data.numpy()), axis=1), [-1, 1])
+            BDY_loss = self.get_boundary_loss_list_np(geometry_eval_input.cpu().data.numpy())
+            if self.flags.data_set == 'ballistics':
+                BDY_strength = 0.5
+            elif self.flags.data_set == 'sine_wave':
+                BDY_strength = 0.1
+            elif self.flags.data_set == 'robotic_arm':
+                BDY_strength = 0.01/2048
+            else:
+                BDY_strength = 10/2048
+            mse_loss += BDY_strength * np.reshape(BDY_loss, [-1, 1])
             # The strategy of re-using the BPed result. Save two versions of file: one with FF and one without
             mse_loss = np.concatenate((mse_loss, np.reshape(np.arange(self.flags.eval_batch_size), [-1, 1])), axis=1)
-            loss_sort = mse_loss[mse_loss[:, 0].argsort(kind='mergesort')]                         # Sort the loss list
+            ###########################################
+            # 02.02 for emperically proff of NA bound #
+            ###########################################
+            loss_sort = mse_loss
+            #loss_sort = mse_loss[mse_loss[:, 0].argsort(kind='mergesort')]                         # Sort the loss list
+            
             loss_sort_FF_off = mse_loss
             exclude_top = 0
             trail_nums = 1000
@@ -378,6 +406,7 @@ class Network(object):
             else:
                 saved_model_str = self.saved_model.replace('/', '_') + 'modulized_inference' + str(ind)
             Ypred_file = os.path.join(save_dir, 'test_Ypred_point{}.csv'.format(saved_model_str))
+            Yfake_file = os.path.join(save_dir, 'test_Yfake_point{}.csv'.format(saved_model_str))
             Xpred_file = os.path.join(save_dir, 'test_Xpred_point{}.csv'.format(saved_model_str))
             if 'BP_on_FF_on' in save_dir:
                 # The strategy of re-using the BPed result. Save two versions of file: one with FF and one without
@@ -394,6 +423,7 @@ class Network(object):
                 with open(Xpred_file, 'a') as fxp, open(Ypred_file, 'a') as fyp:
                     np.savetxt(fyp, Ypred[good_index, :])
                     np.savetxt(fxp, geometry_eval_input.cpu().data.numpy()[good_index, :])
+
                 if 'BP_on_FF_on' in save_dir:
                     print("outputting files for FF_off as well")
                     with open(Xpred_file_FF_off, 'a') as fxp, open(Ypred_file_FF_off, 'a') as fyp:
@@ -405,6 +435,13 @@ class Network(object):
                 if 'BP_on_FF_on' in save_dir:
                     with open(Xpred_file_FF_off, 'a') as fxp:
                         np.savetxt(fxp, geometry_eval_input.cpu().data.numpy()[good_index_FF_off, :])
+            
+            ###########################################
+            # 02.02 for emperically proff of NA bound #
+            ###########################################
+            # Save the fake Yp as well
+            with open(Yfake_file, 'a') as fypf:
+                np.savetxt(fypf, logit.cpu().data.numpy()[good_index, :])
 
         ###################################
         # From candidates choose the best #
@@ -416,6 +453,8 @@ class Network(object):
         
         # calculate the MSE list and get the best one
         MSE_list = np.mean(np.square(Ypred - target_spectra_expand.cpu().data.numpy()), axis=1)
+        BDY_list = self.get_boundary_loss_list_np(geometry_eval_input.cpu().data.numpy())
+        MSE_list += BDY_list
         best_estimate_index = np.argmin(MSE_list)
         #print("The best performing one is:", best_estimate_index)
         Xpred_best = np.reshape(np.copy(geometry_eval_input.cpu().data.numpy()[best_estimate_index, :]), [1, -1])
@@ -427,6 +466,17 @@ class Network(object):
 
         return Xpred_best, Ypred_best, MSE_list
 
+
+    def get_boundary_loss_list_np(self, Xpred):
+        """
+        Return the boundary loss in the form of numpy array
+        :param Xpred: input numpy array of prediction
+        """
+        X_range, X_lower_bound, X_upper_bound = self.get_boundary_lower_bound_uper_bound()
+        X_mean = (X_lower_bound + X_upper_bound) / 2        # Get the mean
+        BDY_loss = np.mean(np.maximum(0, np.abs(Xpred - X_mean) - 0.5*X_range), axis=1)
+        return BDY_loss
+        
 
     def initialize_geometry_eval(self, init_from_Xpred):
         """
@@ -440,8 +490,8 @@ class Network(object):
         elif self.flags.data_set == 'ballistics':
             bs = self.flags.eval_batch_size
             numpy_geometry = np.zeros([bs, self.flags.linear[0]])
-            numpy_geometry[:, 0] = np.random.normal(0, 0.25, size=[bs,])
-            numpy_geometry[:, 1] = np.max(np.random.normal(1.5, 0.25, size=[bs,]), 0)
+            numpy_geometry[:, 0] = np.random.normal(0, 0.5, size=[bs,])
+            numpy_geometry[:, 1] = np.max(np.random.normal(1.5, 0.5, size=[bs,]), 0)
             numpy_geometry[:, 2] = np.radians(np.random.uniform(9, 81, size=[bs,]))
             numpy_geometry[:, 3] = np.random.poisson(15, size=[bs,]) / 15
             geometry_eval = self.build_tensor(numpy_geometry, requires_grad=True)
@@ -499,6 +549,7 @@ class Network(object):
         :param load_state_dict: If None, load model using self.load() (default way), If a dir, load state_dict from that dir
         :return: pred_file, truth_file to compare
         """
+        print("entering predict function")
         if load_state_dict is None:
             self.load()         # load the model in the usual way
         else:
@@ -511,6 +562,7 @@ class Network(object):
             Xpred = pd.read_csv(Xpred_file, header=None, delimiter=' ')
         Xpred.info()
         print(Xpred.head())
+        print("Xpred shape", np.shape(Xpred.values))
         Xpred_tensor = torch.from_numpy(Xpred.values).to(torch.float)
         cuda = True if torch.cuda.is_available() else False
         if cuda:
@@ -519,12 +571,13 @@ class Network(object):
         # Put into evaluation mode
         self.model.eval()
         Ypred = self.model(Xpred_tensor)
+        print(Ypred.cpu().data.numpy())
         if load_state_dict is not None:
             Ypred_file = Ypred_file.replace('Ypred', 'Ypred' + load_state_dict[-7:-4])
         elif self.flags.model_name is not None:
                 Ypred_file = Ypred_file.replace('Ypred', 'Ypred' + self.flags.model_name)
         if no_save:                             # If instructed dont save the file and return the array
-             return Ypred.cpu().data.numpy(), Ytruth_file
+            return Ypred.cpu().data.numpy(), Ytruth_file
         np.savetxt(Ypred_file, Ypred.cpu().data.numpy())
 
         return Ypred_file, Ytruth_file

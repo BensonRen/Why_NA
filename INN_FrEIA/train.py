@@ -13,7 +13,7 @@ import flag_reader
 from utils import data_reader
 from class_wrapper import Network
 from model_maker import INN
-from utils.helper_functions import put_param_into_folder,write_flags_and_BVE
+from utils.helper_functions import put_param_into_folder, write_flags_and_BVE
 
 def training_from_flag(flags):
     """
@@ -43,16 +43,23 @@ def retrain_different_dataset(index):
      """
      from utils.helper_functions import load_flags
      data_set_list = ["robotic_arm"]
+     #data_set_list = ["ballistics"]
+     #lambda_mse_list = [0.01, 0.008, 0.005]
      #data_set_list = ["meta_material","sine_wave","ballistics","robotic_arm"]
      for eval_model in data_set_list:
-        flags = load_flags(os.path.join("models", eval_model))
-        flags.model_name = "retrain" + str(index) + eval_model
-        flags.ckpt_dir = 'models/'
-        flags.batch_size = 1024
-        flags.train_step = 500
-        flags.test_ratio = 0.2
-        flags.stop_threshold = -float('inf')
-        training_from_flag(flags)
+         #for lambda_mse in lambda_mse_list:
+         flags = load_flags(os.path.join("models", eval_model))
+         #flags.model_name = "retrain" + str(lambda_mse) + eval_model
+         flags.model_name = "retrain" + str(index) + eval_model
+         flags.ckpt_dir = 'models/'
+         flags.batch_size = 1024
+         flags.train_step = 500
+         flags.dim_tot = 8
+         flags.lambda_mse = 0.003
+         #flags.lambda_mse = lambda_mse
+         flags.test_ratio = 0.2
+         flags.stop_threshold = -float('inf')
+         training_from_flag(flags)
 
 
 if __name__ == '__main__':
@@ -63,5 +70,5 @@ if __name__ == '__main__':
     #training_from_flag(flags)
 
     # Do the retraining for all the data set to get the training for reproducibility
-    for i in range(10):
+    for i in range(1):
         retrain_different_dataset(i)

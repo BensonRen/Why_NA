@@ -466,7 +466,7 @@ def get_mse_mat_from_folder(data_dir):
     ####################################################################
     if 'NA' in data_dir or 'on' in data_dir: 
         l, w = np.shape(Yt)
-        num_trails = 200
+        num_trails = 1000
         Ypred_mat = np.zeros([l, num_trails, w])
         check_full = np.zeros(l)                                     # Safety check for completeness
         for files in os.listdir(data_dir):
@@ -711,7 +711,7 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
                 quan2575_dict[dirs] = mse_quan2575_list
     print("printing the min_dict", min_dict)
        
-    def plotDict(dict, name, data_name=None, logy=False, time_in_s_table=None, plot_points=51, avg_dict=None, resolution=5, err_dict=None, color_assign=False):
+    def plotDict(dict, name, data_name=None, logy=False, time_in_s_table=None, plot_points=50, avg_dict=None, resolution=5, err_dict=None, color_assign=False):
         """
         :param name: the name to save the plot
         :param dict: the dictionary to plot
@@ -727,7 +727,18 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
                         "INN":"k", "Random": "y","MDN": "violet", "Tandem__with_boundary":"orange", "NA__boundary_prior":"violet","NA__no_boundary_prior":"m","INN_new":"violet",
                         "NA__boundary_no_prior": "grey", "NA_noboundary": "olive"}
         f = plt.figure()
+        text_pos = 0.01
         for key in sorted(dict.keys()):
+            ######################################################
+            # This is for 02.02 getting the T=1, 50, 1000 result #
+            ######################################################
+            #text = key.replace('_',' ')+"\n" + ': t1={:.2e},t50={:.2e},t1000={:.2e}'.format(dict[key][0][0], dict[key][49][0], dict[key][999][0])
+            #print("printing message on the plot now")
+            #plt.text(1, text_pos, text, wrap=True)
+            #text_pos /= 5
+
+
+
             x_axis = np.arange(len(dict[key])).astype('float')
             x_axis += 1
             if time_in_s_table is not None:
@@ -751,6 +762,8 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
             ax = plt.gca()
             ax.set_yscale('log')
         plt.legend(loc=1)
+        
+        
         if time_in_s_table is not None:
             plt.xlabel('inference time (s)')
         else:
@@ -832,14 +845,14 @@ def DrawEvaluationTime(data_dir, data_name, save_name='evaluation_time', logy=Fa
 if __name__ == '__main__':
     # NIPS version 
     #MeanAvgnMinMSEvsTry_all('/work/sr365/NA_compare/')
-    datasets = ['ballistics']
+    #datasets = ['ballistics']
     #datasets = ['meta_material', 'robotic_arm','sine_wave','ballistics']
-    lr_list = ['lr1','lr0.5','lr0.05']
-    for lr in lr_list:
-        MeanAvgnMinMSEvsTry_all('/work/sr365/NA_compare/'+lr)
-        for dataset in datasets:
-            DrawAggregateMeanAvgnMSEPlot('/work/sr365/NA_compare/'+lr, dataset)
-            
+    #lr_list = ['lr1','lr0.5','lr0.05']
+    #for lr in lr_list:
+    #    MeanAvgnMinMSEvsTry_all('/work/sr365/NA_compare/'+lr)
+    #    for dataset in datasets:
+    #        DrawAggregateMeanAvgnMSEPlot('/work/sr365/NA_compare/'+lr, dataset)
+    #        
     #DrawAggregateMeanAvgnMSEPlot('/work/sr365/NA_compare/', 'ballistics')
         
     
@@ -850,6 +863,17 @@ if __name__ == '__main__':
     #for dataset in datasets:
     #    DrawAggregateMeanAvgnMSEPlot('/work/sr365/multi_eval/', dataset)
     
+    """
+    # NIPS version on Groot
+    #work_dir = '/data/users/ben/robotic_stuck/retrain5/'
+    work_dir = '/data/users/ben/multi_eval/'
+    MeanAvgnMinMSEvsTry_all(work_dir)
+    datasets = ['ballistics','robotic_arm']
+    ##datasets = ['meta_material', 'robotic_arm','sine_wave','ballistics']
+    for dataset in datasets:
+        DrawAggregateMeanAvgnMSEPlot(work_dir, dataset)
+    """
+    
     # NIPS version for INN robo
     #MeanAvgnMinMSEvsTry_all('/work/sr365/multi_eval/special/')
     #datasets = ['robotic_arm']
@@ -857,12 +881,37 @@ if __name__ == '__main__':
     #for dataset in datasets:
     #    DrawAggregateMeanAvgnMSEPlot('/work/sr365/multi_eval/special', dataset)
     
-    
+
     # Modulized version (ICML)
-    #algo_list = ['cINN','INN','VAE','MDN','Random'] 
+    data_dir = '/data/users/ben/'
+    #data_dir = '/work/sr365/'
+    algo_list = ['cINN','INN','VAE','MDN','Random'] 
+    #algo_list = ''
+    for algo in algo_list:
+        MeanAvgnMinMSEvsTry_all(data_dir + 'ICML_exp_mm/' + algo + '/')
+        datasets = ['meta_material']
+        #datasets = ['robotic_arm','sine_wave','ballistics']
+        #datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
+        for dataset in datasets:
+            DrawAggregateMeanAvgnMSEPlot(data_dir+ 'ICML_exp_mm/'+algo+'/', dataset)
+    
+    # Modulized version plots (ICML_0120)
+    #data_dir = '/data/users/ben/'
+    ##data_dir = '/work/sr365/'
+    ##algo_list = ['cINN','INN','VAE','MDN','Random'] 
+    #algo_list = ['Ball','rob','sine','MM']
     #for algo in algo_list:
-    #    MeanAvgnMinMSEvsTry_all('/work/sr365/ICML_exp/' + algo + '/')
-    #    datasets = ['robotic_arm','ballistics']
-    #    #datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
+    #    #MeanAvgnMinMSEvsTry_all(data_dir + 'ICML_exp_0120/top_ones_' + algo + '/')
+    #    #datasets = ['robotic_arm','ballistics']
+    #    datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
     #    for dataset in datasets:
-    #        DrawAggregateMeanAvgnMSEPlot('/work/sr365/ICML_exp/'+algo+'/', dataset)
+    #        DrawAggregateMeanAvgnMSEPlot(data_dir+ 'ICML_exp_0120/top_ones_'+algo+'/', dataset)
+
+
+    ## Draw the top ones
+    #datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
+    #draw_dir = '/data/users/ben/best_plot/'
+    #for dataset in datasets:
+    #    DrawAggregateMeanAvgnMSEPlot(draw_dir + dataset , dataset)
+
+

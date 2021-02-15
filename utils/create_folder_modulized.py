@@ -5,14 +5,16 @@ import os
 import numpy
 import shutil
 # Where to create the folders, assume here
-#create_directory_folder = '/work/sr365/ICML_mm/'
-create_directory_folder = '/work/sr365/ICML_exp/'
+# create_directory_folder = '/work/sr365/ICML_mm/'
+# create_directory_folder = '/work/sr365/ICML_exp/'
+create_directory_folder = '/data/users/ben/ICML_exp_mm/'    # For Groot 
 # If testing_mode on, only one folder would be in the list: cINN_on_on/robotic
 testing_mode = False
 
 # Setting up the list of datasets and method to work on
-#dataset_list = ['meta_material']
-dataset_list = ['meta_material','robotic_arm','sine_wave','ballistics']
+dataset_list = ['meta_material']
+#dataset_list = ['meta_material','robotic_arm','sine_wave','ballistics']
+#dataset_list = ['robotic_arm','sine_wave','ballistics']
 initializer_list = ['Random','cINN','INN','VAE','MDN']
 optimizer_list_base = ['BP_off']
 filter_list_base = ['FF_off']
@@ -35,9 +37,33 @@ def get_folder_modulized(gpu=None, off_only=False):
                 # Create the method_crossed folder
                 path = os.path.join(create_directory_folder, init + '_' + opti + '_' + fil)
                 if off_only and 'on' in path:
-                    continue;
+                    continue
                 folder_list.append(path)
     sub_list = []
+    
+    # This is the work allocation for Meta_material only since it is consuming a lot of time
+    if gpu is None:
+        return folder_list
+    elif gpu==1:
+        for folder in folder_list:
+            if 'Random' in folder or 'BP_off' in folder:
+                sub_list.append(folder)
+    elif gpu==2:
+        for folder in folder_list:
+            if 'INN' in folder and 'BP_on' in folder:
+                sub_list.append(folder)
+    elif gpu==3:
+        for folder in folder_list:
+            if 'MDN' in folder :
+                sub_list.append(folder)
+    elif gpu==4:
+        for folder in folder_list:
+            if 'VAE' in folder :
+                sub_list.append(folder)
+    return sub_list
+
+    """
+    # This is the original work allocation
     if gpu is None:
         return folder_list 
     elif gpu == 1: # Titan X (Pascal), speed = 1.4
@@ -60,6 +86,7 @@ def get_folder_modulized(gpu=None, off_only=False):
             if 'VAE' in folder and  'BP_on' in folder:
                 sub_list.append(folder)
     return sub_list
+    """
 
         
 def check_modulized_yet(data_dir):
@@ -83,21 +110,60 @@ def duplicate_off_off_base_folders():
                 src_path = os.path.join(create_directory_folder, init + '_BP_off_FF_off') 
                 # If this is already copied, skip this folder
                 if os.path.isdir(dest_path):
-                    continue;
+                    print("skipping copying from:", src_path, " to dir:", dest_path)
+                    continue
                 try:
+                    print("Now, copying from:", src_path, " to dir:", dest_path)
                     shutil.copytree(src_path, dest_path)
                 except shutil.Error as e:
-                    print('Directory not copied. Error: %s' %e, dest_path)
+                    print('Directory not copied. Error: %s' % e, dest_path)
                 except OSError as e:
-                    print('Directory not copied. Error: %s' %e, dest_path)
-                
+                    print('Directory not copied. Error: %s' % e, dest_path)
+    
+
+def move_across_ICML_exp(dest_dir, src_dir):
+    """
+    The function to move the experiments of ICML around
+    :param dest_dir: The destination of the moving folders
+    :param scr_dir: The source of moving folders
+    """
+    # Only move the listed folders
+    dataset_sublist = ["ballistics", "robotic_arm"]
+    # Get the folder list
+    folder_list = get_folder_modulized()
+    for dataset in dataset_sublist:
+        for folder in folder_list:
+            print("folder =", folder)
+            print("removing front part")
+            folder = folder.split(create_directory_folder)[-1]
+            print("folder =", folder)
+            # Set up the source and destination first
+            src_path = os.path.join(src_dir, folder, dataset)
+            dest_path = os.path.join(dest_dir, folder, dataset)
+            print("src_path = ", src_path)
+            print("dest_path = ", dest_path)
+            # Warn user if the destination exist and abort
+            if os.path.isdir(dest_path):
+                print("In utils move across ICML exp function, your destination exist! Therefore we are aborting your attempt to move the folder!")
+                exit()
+            # Clear to move folder
+            try:
+                print("Now, copying from:", src_path, " to dir:", dest_path)
+                shutil.copytree(src_path, dest_path)
+            except shutil.Error as e:
+                print('Directory not copied. Error: %s' % e, dest_path)
+            except OSError as e:
+                print('Directory not copied. Error: %s' % e, dest_path)
+    
+
 
 def main():
     # Only activate this line if you finished creating base inference
-    duplicate_off_off_base_folders()
-    return
+    if os.path.isdir(os.path.join(create_directory_folder, 'cINN_BP_off_FF_off')):
+        duplicate_off_off_base_folders()
+        return
     
-    #Main function of create folder
+    # Main function of create folder
     for init in initializer_list:
         for opti in optimizer_list_base:
             for fil in filter_list_base:
@@ -112,10 +178,12 @@ def main():
                         os.makedirs(data_set_path)
 
 
-
 if __name__ == '__main__':
-    #folders = get_folder_modulized(gpu=2, off_only=False)
-    #for fod in folders:
-    #    print(fod)
+    # folders = get_folder_modulized(gpu=3, off_only=False)
+    # for fod in folders:
+    #   print(fod)
 
     main()
+    # move_across_ICML_exp(dest_dir='/data/users/ben/ICML_mm/',src_dir='/data/users/ben/ICML_exp')
+
+
