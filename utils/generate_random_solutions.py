@@ -20,8 +20,9 @@ trail_num = 2048
 #truth_folder = '/work/sr365/ICML_mm/cINN_BP_off_FF_off/'
 #truth_folder = '/work/sr365/ICML_exp/cINN_BP_off_FF_off/'
 
-# I am Groot!
-truth_folder = '/data/users/ben/ICML_exp_mm/cINN_BP_off_FF_off/'
+#truth_folder = '/data/users/ben/ICML_exp_mm/cINN_BP_off_FF_off/' # I am Groot!
+truth_folder =  '/home/sr365/ICML_exp_mm/cINN_BP_off_FF_off/'   # quad
+#truth_folder =  '/home/sr365/ICML_exp/cINN_BP_off_FF_off/'   # quad
 
 def generate_sine_wave(data_num):
     return np.random.uniform(size=(data_num,2), low=-1, high=1)

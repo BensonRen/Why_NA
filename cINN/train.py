@@ -42,9 +42,9 @@ def retrain_different_dataset(index):
     This function is to evaluate all different datasets in the model with one function call
     """
     from utils.helper_functions import load_flags
-    data_set_list = ["ballistics"]
+    #data_set_list = ["ballistics"]
     #reg_scale_list = [0, 1e-4, 1e-3, 1e-2, 1e-1]
-    #data_set_list = ["robotic_arm","sine_wave","ballistics","meta_material"]
+    data_set_list = ["robotic_arm","sine_wave","ballistics","meta_material"]
     for eval_model in data_set_list:
         #for reg_scale in reg_scale_list:
         flags = load_flags(os.path.join("models", eval_model))
@@ -56,7 +56,7 @@ def retrain_different_dataset(index):
         flags.geoboundary = [-1, 1, -1, 1]     # the geometry boundary of meta-material dataset is already normalized in current version
         flags.train_step = 500
         flags.test_ratio = 0.2
-        flags.reg_scale = 0.08
+        #flags.reg_scale = 0.08
         flags.stop_threshold = -float('inf')
         training_from_flag(flags)
 

@@ -200,6 +200,7 @@ if __name__ == '__main__':
     
    
     # Single evaluation in the data folder of each method
+    #method_list = ['MDN','INN_FrEIA','cINN','VAE']
     #method_list = ['Tandem','MDN','INN_FrEIA','cINN','NA','VAE']
     #for method in method_list:
     #    predict_ensemble_for_all('../Simulated_DataSets/Meta_material_Neural_Simulator/state_dicts/', '../'+ method + '/data/', no_plot=False)  
@@ -213,15 +214,13 @@ if __name__ == '__main__':
     #    predict_ensemble_for_all('../Simulated_DataSets/Meta_material_Neural_Simulator/state_dicts/', '/work/sr365/multi_eval/'+ method + '/meta_material/', no_plot=True)  
         #predict_ensemble_for_all('../Simulated_DataSets/Meta_material_Neural_Simulator/state_dicts/', '../multi_eval/'+ method + '/meta_material/', no_plot=True)  
     
-    """
     # This is for the modulized multi evaluation in the ICML_EXP folder
-    method_list_multi = get_folder_modulized(gpu=2)
+    method_list_multi = get_folder_modulized()
     for method in method_list_multi:
         predict_ensemble_for_all('../Simulated_DataSets/Meta_material_Neural_Simulator/state_dicts/', os.path.join(method, 'meta_material/'), no_plot=True)  
-    """
 
 
     #predict_from_model("models/retrain0ballistics", 'data/Xpred_ball.csv', no_plot=False, load_state_dict=None)
     #predict_from_model("models/retrain0robotic_arm", 'data/Xpred_robo.csv', no_plot=False, load_state_dict=None)
     #predict_from_model("models/retrain0sine_wave", 'data/Xpred_sine.csv', no_plot=False, load_state_dict=None)
-    predict_from_model("models/retrain0meta_material", 'data/test_Xpred_retrain0meta_material.csv', no_plot=False, load_state_dict=None)
+    #predict_from_model("models/retrain0meta_material", 'data/test_Xpred_retrain0meta_material.csv', no_plot=False, load_state_dict=None)

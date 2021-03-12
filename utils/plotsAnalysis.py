@@ -375,6 +375,7 @@ def calculate_AREA(Xpred, Xtruth):
 
 def calculate_MST(Xpred, Xtruth):
     """
+    MST: Minimal spanning tree
     Function to calculate the MST for both Xpred and Xtruth under using the segmentation of 0.01
     """
 
@@ -466,7 +467,7 @@ def get_mse_mat_from_folder(data_dir):
     ####################################################################
     if 'NA' in data_dir or 'on' in data_dir: 
         l, w = np.shape(Yt)
-        num_trails = 1000
+        num_trails = 2048
         Ypred_mat = np.zeros([l, num_trails, w])
         check_full = np.zeros(l)                                     # Safety check for completeness
         for files in os.listdir(data_dir):
@@ -511,34 +512,52 @@ def get_mse_mat_from_folder(data_dir):
         # For special case yp = -999, it is out of numerical simulator
         print("shape of np :", np.shape(yp))
         print("shape of Yt :", np.shape(Yt))
-        if np.shape(yp)[1] == 1:                        # If this is ballistics
+        if np.shape(yp)[1] == 1:                        # If this is ballistics (actually sinewave also is 1d)
             print("this is ballistics dataset, checking the -999 situation now")
             valid_index = yp[:, 0] != -999
+            invalid_index = yp[:, 0] == -999
+            #valid_index = np.arange(len(yp[:, 0]))[valid_index]
+            #invalid_index = np.arange(len(yp[:, 0]))[not valid_index]
             print("shape of valid flag :", np.shape(valid_index))
-            valid_num = np.sum(valid_index)
-            yp = yp[valid_index, :]
-            Yt_valid = Yt[valid_index, :]
-            print("shape of np after valid :", np.shape(yp))
-            print("shape of Yt after valid :", np.shape(Yt_valid))
-            mse = np.mean(np.square(yp - Yt_valid), axis=1)
-            if valid_num == len(valid_index):
-                mse_mat[ind, :] = mse
-            else:
-                mse_mat[ind, :valid_num] = mse
-                mse_mat[ind, valid_num:] = np.mean(mse)
+            mse = np.mean(np.square(yp - Yt), axis=1)
+            mse_mat[ind, valid_index] = mse[valid_index]
+            mse_mat[ind, invalid_index] = -999 
+            #valid_num = np.sum(valid_index)
+            #yp = yp[valid_index, :]
+            #Yt_valid = Yt[valid_index, :]
+            #print("shape of np after valid :", np.shape(yp))
+            #print("shape of Yt after valid :", np.shape(Yt_valid))
+            #mse = np.mean(np.square(yp - Yt_valid), axis=1)
+            #if valid_num == len(valid_index):
+            #    mse_mat[ind, :] = mse
+            #else:
+            #    mse_mat[ind, :valid_num] = mse
+            #    mse_mat[ind, valid_num:] = np.mean(mse)
         else:
             mse = np.mean(np.square(yp - Yt), axis=1)
             mse_mat[ind, :] = mse
     print("shape of the yp is", np.shape(yp)) 
     print("shape of mse is", np.shape(mse))
+    # Extra step to work with -999 case for ballistics
+    if np.shape(yp)[1] == 1:
+        print("Processing the ballistics data due to -999")
+        for i in range(len(Yt)):
+            # Get that list
+            mse_list = mse_mat[:, i]
+            # change ones with -999 to mean of others
+            valid_list = mse_list != -999
+            invalid_list = mse_list == -999
+            mse_mat[invalid_list, i] = np.mean(mse_list[valid_list])
+
 
     return mse_mat, Ypred_list
     
-def MeanAvgnMinMSEvsTry(data_dir):
+def MeanAvgnMinMSEvsTry(data_dir, FF_ratio):
     """
     Plot the mean average Mean and Min Squared error over Tries
     :param data_dir: The directory where the data is in
     :param title: The title for the plot
+    
     :return:
     """
     # Read Ytruth file
@@ -549,39 +568,46 @@ def MeanAvgnMinMSEvsTry(data_dir):
 
     # Get the MSE matrix from the giant folder with multi_eval
     mse_mat, Ypred_list = get_mse_mat_from_folder(data_dir)
-        
-    # Shuffle array and average results
-    shuffle_number = 0
-    if shuffle_number > 0:
-        # Calculate the min and avg from mat
-        mse_min_list = np.zeros([len(Ypred_list), shuffle_number])
-        mse_avg_list = np.zeros([len(Ypred_list), shuffle_number])
+    num_init = len(mse_mat)
+
+    # Currently the results are not shuffled as the statistics are enough
+    # Calculate the min and avg from mat
+    mse_min_list = np.zeros([num_init,])
+    mse_avg_list = np.zeros([num_init,])
+    mse_std_list = np.zeros([num_init,])
+    mse_quan2575_list = np.zeros([2, num_init])
     
-        for shuf in range(shuffle_number):
-            rng = np.random.default_rng()
-            rng.shuffle(mse_mat)
-            for i in range(len(Ypred_list)):
-                mse_avg_list[i, shuf] = np.mean(mse_mat[:i+1, :])
-                mse_min_list[i, shuf] = np.mean(np.min(mse_mat[:i+1, :], axis=0))
-        # Average the shuffled result
-        mse_avg_list = np.mean(mse_avg_list, axis=1)
-        mse_min_list = np.mean(mse_min_list, axis=1)
-    else:               # Currently the results are not shuffled as the statistics are enough
-        # Calculate the min and avg from mat
-        mse_min_list = np.zeros([len(Ypred_list),])
-        mse_avg_list = np.zeros([len(Ypred_list),])
-        mse_std_list = np.zeros([len(Ypred_list),])
-        mse_quan2575_list = np.zeros([2, len(Ypred_list)])
-        if 'NA' in data_dir:            
-            cut_front = 0
+
+    # Added feature, to account for the vanishing effect of forward filtering, 
+    # currently fix the FF ratio here, steps to implement that:
+    # 1. detect if this is FF_on
+    # 2. If this is FF_on, the mse_mat is inherently ranked by the fake MSE, retreive 
+    # That rank by attaching the index to it, permutate the mse list for each test point
+    # 3. Take the top T/FF_ratio and rank them according to inherent rank
+    # 4. Take the first T from the inherent rank, take the minimum
+    FF_on = False       # Flag that indicates whether this is a Forward filtering result
+    if 'FF_on' in data_dir:
+        #shape of MSE_MAT: [#initialization, #test_points]
+        
+        inherent_rank = np.arange(num_init)
+        permutate_index = np.random.permutation(num_init)
+        FF_on = True
+    # Calculating the average, min mse
+    for i in range(num_init):
+        mse_avg_list[i] = np.mean(mse_mat[:i+1, :])
+        
+        # Special handling for FF
+        FF_range = int((i+1)/FF_ratio)
+        # If the FF is on and this is valid FF (T(i) / FF_ratio < Num_init)
+        if FF_on and FF_range < num_init:
+            permutate_in_range = permutate_index[:FF_range]
+            sorted_permutate = np.sort(permutate_in_range)[:i+1]
+            mse_min_list[i] =  np.mean(np.min(mse_mat[sorted_permutate, :], axis=0))
         else:
-            cut_front = 0
-        for i in range(len(Ypred_list)-cut_front):
-            mse_avg_list[i] = np.mean(mse_mat[cut_front:i+1+cut_front, :])
-            mse_min_list[i] = np.mean(np.min(mse_mat[cut_front:i+1+cut_front, :], axis=0))
-            mse_std_list[i] = np.std(np.min(mse_mat[cut_front:i+1+cut_front, :], axis=0))
-            mse_quan2575_list[0, i] = np.percentile(np.min(mse_mat[cut_front:i+1+cut_front, :], axis=0), 25)
-            mse_quan2575_list[1, i] = np.percentile(np.min(mse_mat[cut_front:i+1+cut_front, :], axis=0), 75)
+            mse_min_list[i] = np.mean(np.min(mse_mat[:i+1, :], axis=0))
+        mse_std_list[i] = np.std(np.min(mse_mat[:i+1, :], axis=0))
+        mse_quan2575_list[0, i] = np.percentile(np.min(mse_mat[:i+1, :], axis=0), 25)
+        mse_quan2575_list[1, i] = np.percentile(np.min(mse_mat[:i+1, :], axis=0), 75)
 
     # Save the list down for further analysis
     np.savetxt(os.path.join(data_dir, 'mse_mat.csv'), mse_mat, delimiter=' ')
@@ -602,7 +628,7 @@ def MeanAvgnMinMSEvsTry(data_dir):
     return None
 
 
-def MeanAvgnMinMSEvsTry_all(data_dir): # Depth=2 now based on current directory structure
+def MeanAvgnMinMSEvsTry_all(data_dir, FF_ratio=0.2): # Depth=2 now based on current directory structure
     """
     Do the recursive call for all sub_dir under this directory
     :param data_dir: The mother directory that calls
@@ -620,7 +646,7 @@ def MeanAvgnMinMSEvsTry_all(data_dir): # Depth=2 now based on current directory 
             if os.path.isfile(os.path.join(data_dir, dirs, subdirs, 'mse_min_list.txt')):                               # if this has been done
                 continue;
             print("enters folder", subdirs)
-            MeanAvgnMinMSEvsTry(os.path.join(data_dir, dirs, subdirs))
+            MeanAvgnMinMSEvsTry(os.path.join(data_dir, dirs, subdirs), FF_ratio)
     return None
 
 
@@ -666,12 +692,15 @@ def DrawBoxPlots_multi_eval(data_dir, data_name, save_name='Box_plot'):
     return None
 
 
-def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot', gif_flag=False): # Depth=2 now based on current directory structure
+def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot', 
+                                gif_flag=False, plot_points=2000,resolution=50): # Depth=2 now based on current directory structure
     """
     The function to draw the aggregate plot for Mean Average and Min MSEs
     :param data_dir: The mother directory to call
     :param data_name: The data set name
     :param git_flag: Plot are to be make a gif
+    :param plot_points: Number of points to be plot
+    :param resolution: The resolution of points
     :return:
     """
     # Predefined name of the avg lists
@@ -709,19 +738,19 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
                 min_dict[dirs] = mse_min_list
                 std_dict[dirs] = mse_std_list
                 quan2575_dict[dirs] = mse_quan2575_list
-    print("printing the min_dict", min_dict)
+    #print("printing the min_dict", min_dict)
        
-    def plotDict(dict, name, data_name=None, logy=False, time_in_s_table=None, plot_points=50, avg_dict=None, resolution=5, err_dict=None, color_assign=False):
+    def plotDict(dict, name, plot_points, resolution, data_name=None, logy=False, time_in_s_table=None, avg_dict=None,  err_dict=None, color_assign=False):
         """
         :param name: the name to save the plot
         :param dict: the dictionary to plot
         :param logy: use log y scale
         :param time_in_s_table: a dictionary of dictionary which stores the averaged evaluation time
                 in seconds to convert the graph
-        :param plot_points: Number of points to be plot
-        :param resolution: The resolution of points
         :param err_dict: The error bar dictionary which takes the error bar input
         :param avg_dict: The average dict for plotting the starting point
+        :param plot_points: Number of points to be plot
+        :param resolution: The resolution of points
         """
         color_dict = {"NA":"g", "Tandem": "b", "VAE": "r","cINN":"m", 
                         "INN":"k", "Random": "y","MDN": "violet", "Tandem__with_boundary":"orange", "NA__boundary_prior":"violet","NA__no_boundary_prior":"m","INN_new":"violet",
@@ -737,14 +766,12 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
             #plt.text(1, text_pos, text, wrap=True)
             #text_pos /= 5
 
-
-
             x_axis = np.arange(len(dict[key])).astype('float')
             x_axis += 1
             if time_in_s_table is not None:
                 x_axis *= time_in_s_table[data_name][key]
             print("printing", name)
-            print(key)
+            #print(key)
             #print(dict[key])
             if err_dict is None:
                 if color_assign:
@@ -783,10 +810,10 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
         plt.grid(True, axis='both',which='both',color='b',alpha=0.3)
         plt.savefig(os.path.join(data_dir, data_name + save_name + name), transparent=True)
         plt.close('all')
-    plotDict(min_dict,'_minlog_quan2575.png', logy=True, avg_dict=avg_dict, err_dict=quan2575_dict, data_name=data_name)
-    #plotDict(min_dict,'_min_quan2575.png', logy=False, avg_dict=avg_dict, err_dict=quan2575_dict)
-    #plotDict(min_dict,'_minlog_std.png', logy=True, avg_dict=avg_dict, err_dict=std_dict)
-    #plotDict(min_dict,'_min_std.png', logy=False, avg_dict=avg_dict, err_dict=std_dict)
+    plotDict(min_dict,'_minlog_quan2575.png', plot_points, resolution, logy=True, avg_dict=avg_dict, err_dict=quan2575_dict, data_name=data_name)
+    #plotDict(min_dict,'_min_quan2575.png', plot_points, resolution, logy=False, avg_dict=avg_dict, err_dict=quan2575_dict)
+    #plotDict(min_dict,'_minlog_std.png', plot_points, resolution, logy=True, avg_dict=avg_dict, err_dict=std_dict)
+    #plotDict(min_dict,'_min_std.png', plot_points, resolution, logy=False, avg_dict=avg_dict, err_dict=std_dict)
 
     # if plot gifs
     if not gif_flag:
@@ -881,19 +908,20 @@ if __name__ == '__main__':
     #for dataset in datasets:
     #    DrawAggregateMeanAvgnMSEPlot('/work/sr365/multi_eval/special', dataset)
     
+    #MeanAvgnMinMSEvsTry_all('/home/sr365/ICML_exp_cINN_ball/')
+    #DrawAggregateMeanAvgnMSEPlot('/home/sr365/ICML_exp_cINN_ball', dataset)
 
     # Modulized version (ICML)
-    data_dir = '/data/users/ben/'
+    #data_dir = '/data/users/ben/'  # I am groot!
+    data_dir = '/home/sr365/' # quad
     #data_dir = '/work/sr365/'
     algo_list = ['cINN','INN','VAE','MDN','Random'] 
     #algo_list = ''
     for algo in algo_list:
-        MeanAvgnMinMSEvsTry_all(data_dir + 'ICML_exp_mm/' + algo + '/')
-        datasets = ['meta_material']
-        #datasets = ['robotic_arm','sine_wave','ballistics']
-        #datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
+        MeanAvgnMinMSEvsTry_all(os.path.join(data_dir, 'ICML_exp',algo))
+        datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
         for dataset in datasets:
-            DrawAggregateMeanAvgnMSEPlot(data_dir+ 'ICML_exp_mm/'+algo+'/', dataset)
+            DrawAggregateMeanAvgnMSEPlot(os.path.join(data_dir,'ICML_exp',algo), dataset)
     
     # Modulized version plots (ICML_0120)
     #data_dir = '/data/users/ben/'

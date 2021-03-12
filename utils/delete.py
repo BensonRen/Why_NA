@@ -8,7 +8,10 @@ import numpy
 #input_dir = '/data/users/ben/robotic_stuck/retrain5/'                
 #input_dir = '/data/users/ben/multi_eval/'                
 #input_dir = '/work/sr365/ICML_exp/'                # ICML code version
-input_dir = '/data/users/ben/ICML_exp/'                #  I am Groot!
+#input_dir =  '/home/sr365/ICML_exp_mm/'   # quad
+#input_dir = '/home/sr365/ICML_exp_cINN_ball/'    # For quad
+input_dir =  '/home/sr365/ICML_exp/'   # quad
+#input_dir = '/data/users/ben/ICML_exp/'                #  I am Groot!
 #input_dir = '/data/users/ben/ICML_exp_mm/'                #  I am Groot!
 #input_dir = '/work/sr365/ICML_mm/'                # ICML code version --- MM special
 delete_mse_file_mode = True                            # Deleting the mse file for the forward filtering

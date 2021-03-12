@@ -13,6 +13,3 @@ if __name__ == '__main__':
             print('moving from ', folder, 'to folder ', target_folder)
             #shutil.move(os.path.join(target_folder), os.path.join(folder, 'meta_material'))
             shutil.move(os.path.join(folder, 'meta_material'), os.path.join(target_folder))
-
-        
-

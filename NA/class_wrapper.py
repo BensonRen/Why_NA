@@ -388,16 +388,15 @@ class Network(object):
                 BDY_strength = 10/2048
             mse_loss += BDY_strength * np.reshape(BDY_loss, [-1, 1])
             # The strategy of re-using the BPed result. Save two versions of file: one with FF and one without
-            mse_loss = np.concatenate((mse_loss, np.reshape(np.arange(self.flags.eval_batch_size), [-1, 1])), axis=1)
+            mse_loss = np.concatenate((mse_loss, np.reshape(np.arange(self.flags.eval_batch_size), [-1, 1])), axis=1)       # Pad the mse_loss_list with an index
             ###########################################
             # 02.02 for emperically proff of NA bound #
             ###########################################
-            loss_sort = mse_loss
-            #loss_sort = mse_loss[mse_loss[:, 0].argsort(kind='mergesort')]                         # Sort the loss list
-            
+            #loss_sort = mse_loss
+            loss_sort = mse_loss[mse_loss[:, 0].argsort(kind='mergesort')]                         # Sort the loss list
             loss_sort_FF_off = mse_loss
             exclude_top = 0
-            trail_nums = 1000
+            trail_nums = 2048
             good_index = loss_sort[exclude_top:trail_nums+exclude_top, 1].astype('int')                        # Get the indexs
             good_index_FF_off = loss_sort_FF_off[exclude_top:trail_nums+exclude_top, 1].astype('int')                        # Get the indexs
             #print("In save all funciton, the top 10 index is:", good_index[:10])
@@ -440,8 +439,8 @@ class Network(object):
             # 02.02 for emperically proff of NA bound #
             ###########################################
             # Save the fake Yp as well
-            with open(Yfake_file, 'a') as fypf:
-                np.savetxt(fypf, logit.cpu().data.numpy()[good_index, :])
+            #with open(Yfake_file, 'a') as fypf:
+            #    np.savetxt(fypf, logit.cpu().data.numpy()[good_index, :])
 
         ###################################
         # From candidates choose the best #

@@ -7,15 +7,20 @@ import shutil
 # Where to create the folders, assume here
 # create_directory_folder = '/work/sr365/ICML_mm/'
 # create_directory_folder = '/work/sr365/ICML_exp/'
-create_directory_folder = '/data/users/ben/ICML_exp_mm/'    # For Groot 
+create_directory_folder = '/home/sr365/ICML_exp_cINN_ball/'    # For quad
+#create_directory_folder = '/home/sr365/ICML_exp_mm/'    # For quad
+#create_directory_folder = '/home/sr365/ICML_exp/'    # For quad
+#create_directory_folder = '/data/users/ben/ICML_exp_mm/'    # For Groot 
 # If testing_mode on, only one folder would be in the list: cINN_on_on/robotic
 testing_mode = False
 
 # Setting up the list of datasets and method to work on
-dataset_list = ['meta_material']
+#dataset_list = ['meta_material']
+dataset_list = ['ballistics']
 #dataset_list = ['meta_material','robotic_arm','sine_wave','ballistics']
 #dataset_list = ['robotic_arm','sine_wave','ballistics']
-initializer_list = ['Random','cINN','INN','VAE','MDN']
+initializer_list = ['cINN']
+#initializer_list = ['Random','cINN','INN','VAE','MDN']
 optimizer_list_base = ['BP_off']
 filter_list_base = ['FF_off']
 optimizer_list_full = ['BP_on','BP_off']
@@ -41,6 +46,7 @@ def get_folder_modulized(gpu=None, off_only=False):
                 folder_list.append(path)
     sub_list = []
     
+    """
     # This is the work allocation for Meta_material only since it is consuming a lot of time
     if gpu is None:
         return folder_list
@@ -62,8 +68,7 @@ def get_folder_modulized(gpu=None, off_only=False):
                 sub_list.append(folder)
     return sub_list
 
-    """
-    # This is the original work allocation
+    # This is the original work allocation on Groot
     if gpu is None:
         return folder_list 
     elif gpu == 1: # Titan X (Pascal), speed = 1.4
@@ -86,8 +91,54 @@ def get_folder_modulized(gpu=None, off_only=False):
             if 'VAE' in folder and  'BP_on' in folder:
                 sub_list.append(folder)
     return sub_list
-    """
 
+    # This is the allocation for quad 3090 
+    if gpu is None:
+        return folder_list 
+    elif gpu == 1: 
+        for folder in folder_list:
+            if 'Random' in folder and 'BP_on' in folder:
+                sub_list.append(folder)
+            if 'MDN' in folder and 'BP_on' in folder:
+                sub_list.append(folder)
+    elif gpu == 2:
+        for folder in folder_list:
+            if 'cINN' in folder or 'BP_off' in folder:
+                sub_list.append(folder)
+    elif gpu == 3: 
+        for folder in folder_list:
+            sub_list.append(folder)
+    elif gpu == 4: 
+        for folder in folder_list:
+            if 'INN' in folder and  'BP_on' in folder and 'cINN' not in folder:
+                sub_list.append(folder)
+            if 'VAE' in folder and  'BP_on' in folder:
+                sub_list.append(folder)
+    return sub_list
+    """
+    
+    # This is the allocation for quad 3090 mm only
+    if gpu is None:
+        return folder_list 
+    elif gpu == 1: 
+        for folder in folder_list:
+            if 'Random' in folder and 'BP_on' in folder:
+                sub_list.append(folder)
+            if 'MDN' in folder and 'BP_on' in folder:
+                sub_list.append(folder)
+    elif gpu == 2:
+        for folder in folder_list:
+            if 'cINN' in folder and 'BP_on' in folder:
+                sub_list.append(folder)
+    elif gpu == 3: 
+        for folder in folder_list:
+            if 'VAE' in folder and 'BP_on' in folder or 'BP_off' in folder:
+                sub_list.append(folder)
+    elif gpu == 4: 
+        for folder in folder_list:
+            if 'INN' in folder and  'BP_on' in folder and 'cINN' not in folder:
+                sub_list.append(folder)
+    return sub_list
         
 def check_modulized_yet(data_dir):
     """
