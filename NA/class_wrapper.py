@@ -322,7 +322,8 @@ class Network(object):
                 np.savetxt(fxp, Xpred)
         return Ypred_file, Ytruth_file
 
-    def evaluate_one(self, target_spectra, save_dir='data/', MSE_Simulator=False ,save_all=False, ind=None, save_misc=False, save_Simulator_Ypred=True, init_from_Xpred=None, FF=True):
+    def evaluate_one(self, target_spectra, save_dir='data/', MSE_Simulator=False ,save_all=False, ind=None, save_misc=False, 
+                        save_Simulator_Ypred=True, init_from_Xpred=None, FF=True, save_MSE_each_epoch=False):
         """
         The function which being called during evaluation and evaluates one target y using # different trails
         :param target_spectra: The target spectra/y to backprop to 
@@ -335,20 +336,32 @@ class Network(object):
         :return: Ypred_best: The 1 singe best Ypred that is reached by backprop
         :return: MSE_list: The list of MSE at the last stage
         :param FF(forward_filtering): [default to be true for historical reason] The flag to control whether use forward filtering or not
+        :param save_MSE_each_epoch: To check the MSE progress of backprop
         """
 
         # Initialize the geometry_eval or the initial guess xs
         geometry_eval = self.initialize_geometry_eval(init_from_Xpred)
         # Set up the learning schedule and optimizer
+        self.optm_eval = self.make_optimizer_eval(geometry_eval)
         ######################################################
         # 02.02 for emperically proff of NA bound, SGD optim #
         ######################################################
-        self.optm_eval = self.make_optimizer_eval(geometry_eval , optimizer_type='SGD')
+        #self.optm_eval = self.make_optimizer_eval(geometry_eval , optimizer_type='SGD')
         self.lr_scheduler = self.make_lr_scheduler(self.optm_eval)
         
         # expand the target spectra to eval batch size
         target_spectra_expand = target_spectra.expand([self.flags.eval_batch_size, -1])
         
+        # Extra for early stopping
+        loss_list = []
+        end_lr = self.flags.lr / 8
+        print(self.optm_eval)
+        param_group_1 = self.optm_eval.param_groups[0]
+        if self.flags.data_set == 'sine_wave':
+            stop_threshold = 1e-7
+        else:
+            stop_threshold = 1e-5
+
         # Begin NA
         for i in range(self.flags.backprop_step):
             # Make the initialization from [-1, 1], can only be in loop due to gradient calculator constraint
@@ -365,21 +378,24 @@ class Network(object):
             ###################################################
             loss = self.make_loss(logit, target_spectra_expand, G=geometry_eval_input)         # Get the loss
             loss.backward()                                             # Calculate the Gradient
-            # update weights and learning rate scheduler
-            if i != self.flags.backprop_step - 1:
-                self.optm_eval.step()  # Move one step the optimizer
-                self.lr_scheduler.step(loss.data)
+            self.optm_eval.step()  # Move one step the optimizer
+            loss_np = loss.data
+            self.lr_scheduler.step(loss_np)
+            # Extra step of recording the MSE loss of each epoch
+            loss_list.append(np.copy(loss_np.cpu()))
+            if loss_np < stop_threshold or param_group_1['lr'] < end_lr:
+                break; 
+        if save_MSE_each_epoch:
+            with open('data/{}_MSE_progress_point_{}.txt'.format(self.flags.data_set ,ind),'a') as epoch_file:
+                np.savetxt(epoch_file, loss_list)
+
         
         if save_all:                # If saving all the results together instead of the first one
-            ##############################################################
-            # Choose the top "trail_nums" points from NA solutions #
-            ##############################################################
-            # This is not ok because the filtering should take the boundary loss as well!
-            # Disabling the sorting!!
             mse_loss = np.reshape(np.sum(np.square(logit.cpu().data.numpy() - target_spectra_expand.cpu().data.numpy()), axis=1), [-1, 1])
             BDY_loss = self.get_boundary_loss_list_np(geometry_eval_input.cpu().data.numpy())
             if self.flags.data_set == 'ballistics':
-                BDY_strength = 0.5
+            # This needs to be swiped!
+                BDY_strength = 0.01
             elif self.flags.data_set == 'sine_wave':
                 BDY_strength = 0.1
             elif self.flags.data_set == 'robotic_arm':

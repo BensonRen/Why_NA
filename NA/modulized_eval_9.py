@@ -104,8 +104,10 @@ def modulized_evaluate_different_dataset(gpu=None):
     """
     This function is to evaluate all different datasets in the model with one function call
     """
-    #data_set_list = ["robotic_arm","sine_wave","ballistics"]
-    data_set_list = ["meta_material"]
+    #data_set_list = ["meta_material"]
+    data_set_list = ["ballistics"]
+    #data_set_list = ["robotic_arm","ballistics"]
+    #data_set_list = ["robotic_arm"]
     folder_list = get_folder_modulized(gpu=gpu)
     for folder in folder_list:
         # Skip Random for now
@@ -139,4 +141,4 @@ if __name__ == '__main__':
     #####################
     #Modulized eval Here#
     #####################
-    modulized_evaluate_different_dataset(4)
+    modulized_evaluate_different_dataset(9)

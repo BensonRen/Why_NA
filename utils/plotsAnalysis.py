@@ -596,13 +596,16 @@ def MeanAvgnMinMSEvsTry(data_dir, FF_ratio):
     for i in range(num_init):
         mse_avg_list[i] = np.mean(mse_mat[:i+1, :])
         
-        # Special handling for FF
-        FF_range = int((i+1)/FF_ratio)
-        # If the FF is on and this is valid FF (T(i) / FF_ratio < Num_init)
-        if FF_on and FF_range < num_init:
-            permutate_in_range = permutate_index[:FF_range]
-            sorted_permutate = np.sort(permutate_in_range)[:i+1]
-            mse_min_list[i] =  np.mean(np.min(mse_mat[sorted_permutate, :], axis=0))
+        if FF_ratio is not None:
+            # Special handling for FF
+            FF_range = int((i+1)/FF_ratio)
+            # If the FF is on and this is valid FF (T(i) / FF_ratio < Num_init)
+            if FF_on and FF_range < num_init:
+                permutate_in_range = permutate_index[:FF_range]
+                sorted_permutate = np.sort(permutate_in_range)[:i+1]
+                mse_min_list[i] =  np.mean(np.min(mse_mat[sorted_permutate, :], axis=0))
+            else:
+                mse_min_list[i] = np.mean(np.min(mse_mat[:i+1, :], axis=0))
         else:
             mse_min_list[i] = np.mean(np.min(mse_mat[:i+1, :], axis=0))
         mse_std_list[i] = np.std(np.min(mse_mat[:i+1, :], axis=0))
@@ -628,7 +631,7 @@ def MeanAvgnMinMSEvsTry(data_dir, FF_ratio):
     return None
 
 
-def MeanAvgnMinMSEvsTry_all(data_dir, FF_ratio=0.2): # Depth=2 now based on current directory structure
+def MeanAvgnMinMSEvsTry_all(data_dir, FF_ratio=None): # Depth=2 now based on current directory structure
     """
     Do the recursive call for all sub_dir under this directory
     :param data_dir: The mother directory that calls
@@ -693,7 +696,7 @@ def DrawBoxPlots_multi_eval(data_dir, data_name, save_name='Box_plot'):
 
 
 def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot', 
-                                gif_flag=False, plot_points=2000,resolution=50): # Depth=2 now based on current directory structure
+                                gif_flag=False, plot_points=51,resolution=5): # Depth=2 now based on current directory structure
     """
     The function to draw the aggregate plot for Mean Average and Min MSEs
     :param data_dir: The mother directory to call
@@ -884,11 +887,11 @@ if __name__ == '__main__':
         
     
     # NIPS version 
-    #MeanAvgnMinMSEvsTry_all('/work/sr365/multi_eval/')
-    #datasets = ['robotic_arm','ballistics']
-    ##datasets = ['meta_material', 'robotic_arm','sine_wave','ballistics']
-    #for dataset in datasets:
-    #    DrawAggregateMeanAvgnMSEPlot('/work/sr365/multi_eval/', dataset)
+    MeanAvgnMinMSEvsTry_all('/home/sr365/multi_eval/')
+    #datasets = ['meta_material', 'robotic_arm','sine_wave','ballistics']
+    datasets = ['robotic_arm','sine_wave','ballistics']
+    for dataset in datasets:
+        DrawAggregateMeanAvgnMSEPlot('/home/sr365/multi_eval/', dataset)
     
     """
     # NIPS version on Groot
@@ -908,20 +911,32 @@ if __name__ == '__main__':
     #for dataset in datasets:
     #    DrawAggregateMeanAvgnMSEPlot('/work/sr365/multi_eval/special', dataset)
     
-    #MeanAvgnMinMSEvsTry_all('/home/sr365/ICML_exp_cINN_ball/')
-    #DrawAggregateMeanAvgnMSEPlot('/home/sr365/ICML_exp_cINN_ball', dataset)
+    """
+    data_dir_front = '/home/sr365/ICML_exp_ball_'
+    FFBDYlist = [0, 0.01, 0.1, 1]
+    for bdy in FFBDYlist:
+        data_dir = data_dir_front + str(bdy)
+        dataset = 'ballistics'
+        MeanAvgnMinMSEvsTry_all(data_dir)
+        DrawAggregateMeanAvgnMSEPlot(data_dir, dataset)
+    """
 
+    """
     # Modulized version (ICML)
     #data_dir = '/data/users/ben/'  # I am groot!
-    data_dir = '/home/sr365/' # quad
+    data_dir = '/home/sr365/'       # I am quad !
     #data_dir = '/work/sr365/'
     algo_list = ['cINN','INN','VAE','MDN','Random'] 
-    #algo_list = ''
+    #algo_list = ['Random']
+    exp_folder = 'ICML_exp_mm'
     for algo in algo_list:
-        MeanAvgnMinMSEvsTry_all(os.path.join(data_dir, 'ICML_exp',algo))
-        datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
+        MeanAvgnMinMSEvsTry_all(os.path.join(data_dir, exp_folder, algo))
+        #datasets = ['robotic_arm','ballistics']
+        datasets = ['sine_wave','meta_material']
+        #datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
         for dataset in datasets:
-            DrawAggregateMeanAvgnMSEPlot(os.path.join(data_dir,'ICML_exp',algo), dataset)
+            DrawAggregateMeanAvgnMSEPlot(os.path.join(data_dir, exp_folder, algo), dataset)
+    """
     
     # Modulized version plots (ICML_0120)
     #data_dir = '/data/users/ben/'

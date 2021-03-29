@@ -11,8 +11,10 @@ from utils.helper_functions import simulator
 from Simulated_DataSets.Meta_material_Neural_Simulator.generate_mm_x import generate_meta_material
 
 #dataset_list = ['meta_material','robotic_arm','sine_wave','ballistics']
-#dataset_list = ['robotic_arm','sine_wave','ballistics']
-dataset_list = ["meta_material"]
+dataset_list = ['robotic_arm','sine_wave','ballistics']
+#dataset_list = ["sine_wave"]
+#dataset_list = ["meta_material"]
+#dataset_list = ["meta_material","sine_wave"]
 data_num = 1000
 trail_num = 2048
 
@@ -21,7 +23,7 @@ trail_num = 2048
 #truth_folder = '/work/sr365/ICML_exp/cINN_BP_off_FF_off/'
 
 #truth_folder = '/data/users/ben/ICML_exp_mm/cINN_BP_off_FF_off/' # I am Groot!
-truth_folder =  '/home/sr365/ICML_exp_mm/cINN_BP_off_FF_off/'   # quad
+truth_folder =  '/home/sr365/ICML_exp/cINN_BP_off_FF_off/'   # quad
 #truth_folder =  '/home/sr365/ICML_exp/cINN_BP_off_FF_off/'   # quad
 
 def generate_sine_wave(data_num):
@@ -41,6 +43,8 @@ def generate_robotic_arm(data_num):
     return numpy_geometry 
 
 def check_if_empty_folder(data_dir):
+    if not os.path.isdir(data_dir):
+        os.makedirs(data_dir)
     # Check if a folder is empty
     return len(os.listdir(data_dir)) == 0
 

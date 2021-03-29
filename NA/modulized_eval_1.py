@@ -9,7 +9,7 @@ sys.path.append('../utils/')
 
 # Own
 import flag_reader
-from NA.class_wrapper import Network
+from class_wrapper import Network
 from model_maker import NA
 from utils import data_reader
 from utils.helper_functions import load_flags
@@ -51,7 +51,7 @@ def modulized_evaluate_from_model(model_dir, operate_dir, FF=False, BP=False):
         save_Simulator_Ypred = False
         print("this is MM dataset, there is no simple numerical simulator therefore setting the save_Simulator_Ypred to False")
     flags.batch_size = 1                            # For backprop eval mode, batchsize is always 1
-    flags.lr = 0.5
+    flags.lr = 0.1
     flags.eval_batch_size = 2048
     flags.train_step = 500
 
@@ -104,9 +104,10 @@ def modulized_evaluate_different_dataset(gpu=None):
     """
     This function is to evaluate all different datasets in the model with one function call
     """
-    data_set_list = ["meta_material"]
-    #data_set_list = ["ballistics"]
-    #data_set_list = ["robotic_arm","sine_wave","ballistics"]
+    #data_set_list = ["meta_material"]
+    data_set_list = ["robotic_arm","sine_wave","ballistics"]
+    #data_set_list = ["robotic_arm","ballistics"]
+    #data_set_list = ["meta_material","sine_wave"]
     folder_list = get_folder_modulized(gpu=gpu)
     for folder in folder_list:
         # Skip Random for now

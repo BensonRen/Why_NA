@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 from thop import profile, clever_format
 
 
-def evaluate_from_model(model_dir, multi_flag=False, eval_data_all=False, save_misc=False, MSE_Simulator=False, save_Simulator_Ypred=True, init_lr=0.5, BDY_strength=1):
+def evaluate_from_model(model_dir, multi_flag=False, eval_data_all=False, save_misc=False, MSE_Simulator=False, save_Simulator_Ypred=True, init_lr=0.1, BDY_strength=1):
 
     """
     Evaluating interface. 1. Retreive the flags 2. get data 3. initialize network 4. eval
@@ -71,7 +71,10 @@ def evaluate_from_model(model_dir, multi_flag=False, eval_data_all=False, save_m
     # Evaluation process
     print("Start eval now:")
     if multi_flag:
-        dest_dir = '/data/users/ben/multi_eval/NA/'
+        dest_dir = '/home/sr365/multi_eval/NA/'
+        if not os.path.isdir(dest_dir):
+            os.makedirs(dest_dir)
+        #dest_dir = '/data/users/ben/multi_eval/NA/'
         #dest_dir = '/data/users/ben/multi_eval/NA_lr' + str(init_lr)  + 'bdy_' + str(BDY_strength)+'/' 
         if not os.path.isdir(dest_dir):
             os.mkdir(dest_dir)
@@ -84,9 +87,9 @@ def evaluate_from_model(model_dir, multi_flag=False, eval_data_all=False, save_m
     else:
         pred_file, truth_file = ntwk.evaluate(save_misc=save_misc, MSE_Simulator=MSE_Simulator, save_Simulator_Ypred=save_Simulator_Ypred)
 
-    # Plot the MSE distribution
-    plotMSELossDistrib(pred_file, truth_file, flags)
-    print("Evaluation finished")
+        # Plot the MSE distribution
+        plotMSELossDistrib(pred_file, truth_file, flags)
+        print("Evaluation finished")
 
 
 def evaluate_all(models_dir="models"):
@@ -104,9 +107,6 @@ def evaluate_different_dataset(multi_flag, eval_data_all, save_Simulator_Ypred=F
      This function is to evaluate all different datasets in the model with one function call
      """
      data_set_list = ["robotic_arm","sine_wave","ballistics","meta_material"]
-     #data_set_list = ["robotic_arm","sine_wave","ballistics"]
-     #data_set_list = ["robotic_arm"]
-     #data_set_list = ["meta_material"]
      for eval_model in data_set_list:
         for j in range(1):
             useless_flags = flag_reader.read_flag()
@@ -127,7 +127,7 @@ def evaluate_trail_BDY_lr(multi_flag, eval_data_all, save_Simulator_Ypred=False,
         for lr in lr_list:
             for BDY in BDY_list:
                 useless_flags = flag_reader.read_flag()
-                useless_flags.eval_model = "retrain5" + eval_model
+                useless_flags.eval_model = "retrain0" + eval_model
                 evaluate_from_model(useless_flags.eval_model, multi_flag=multi_flag, eval_data_all=eval_data_all, save_Simulator_Ypred=save_Simulator_Ypred, MSE_Simulator=MSE_Simulator, init_lr = lr, BDY_strength=BDY)
 
 if __name__ == '__main__':

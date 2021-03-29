@@ -10,10 +10,12 @@ from math import ceil,floor
 
 # Set up some hyper-params
 swipe_folder = '/home/sr365/FF_ratio_swipe/'
-FF_ratio_list = [0.01, 0.05, 0.1, 0.2, 0.25, 0.3, 0.4, 0.5]
-data_dir = '/home/sr365/ICML_exp/' 
+FF_ratio_list = [0.05, 0.1, 0.2, 0.25]
+data_dir = '/home/sr365/ICML_exp_mm/' 
 algo_list = ['cINN','INN','VAE','MDN','Random']
-datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
+#datasets = ['robotic_arm','ballistics']
+#datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
+datasets = ['sine_wave','meta_material']
 
 
 def move_plots_to_dir(FF_ratio):
@@ -67,8 +69,9 @@ if __name__ == '__main__':
         for algo in algo_list:
             PA.MeanAvgnMinMSEvsTry_all(os.path.join(data_dir, algo), FF_ratio=FF_ratio)
             for dataset in datasets:
+                plot_points = floor(2048*FF_ratio)
                 PA.DrawAggregateMeanAvgnMSEPlot(os.path.join(data_dir, algo), dataset, 
-                                        plot_points=floor(2048*FF_ratio), resolution=get_resolution(plot_points))
+                                        plot_points=plot_points, resolution=get_resolution(plot_points))
         
         # Step 2.2 Change directory of those generated plots
         move_plots_to_dir(FF_ratio)

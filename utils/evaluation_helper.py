@@ -18,20 +18,24 @@ def get_test_ratio_helper(flags):
     if flags.data_set == 'ballistics':
         #return 0.00781                       # 100 in total
         #return 0.02
+        #return 0.01
         return 0.1
         #return 0.039                        # 500 in total
     elif flags.data_set == 'sine_wave':
         #return 0.0125                        # 100 in total
         #return 0.02
+        #return 0.1
         return 0.1
         #return 0.0625                        # 500 in total
     elif flags.data_set == 'robotic_arm':
         #return 0.02
         return 0.1                          # 500 in total
+        #return 0.01
         #return 0.01                          # 100 in total
     elif flags.data_set == 'meta_material':
+        return 0.001
         #return 0.02
-        return 0.1                        # 10000 in total for Meta material
+        #return 0.1                        # 10000 in total for Meta material
     else:
         print("Your dataset is none of the artificial datasets")
         return None
