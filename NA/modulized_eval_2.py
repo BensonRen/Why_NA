@@ -51,7 +51,7 @@ def modulized_evaluate_from_model(model_dir, operate_dir, FF=False, BP=False):
         save_Simulator_Ypred = False
         print("this is MM dataset, there is no simple numerical simulator therefore setting the save_Simulator_Ypred to False")
     flags.batch_size = 1                            # For backprop eval mode, batchsize is always 1
-    flags.lr = 0.5
+    flags.lr = 0.1
     flags.eval_batch_size = 2048
     flags.train_step = 500
 
