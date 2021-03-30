@@ -696,7 +696,7 @@ def DrawBoxPlots_multi_eval(data_dir, data_name, save_name='Box_plot'):
 
 
 def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot', 
-                                gif_flag=False, plot_points=51,resolution=5): # Depth=2 now based on current directory structure
+                                gif_flag=False, plot_points=2000,resolution=50): # Depth=2 now based on current directory structure
     """
     The function to draw the aggregate plot for Mean Average and Min MSEs
     :param data_dir: The mother directory to call
@@ -886,12 +886,14 @@ if __name__ == '__main__':
     #DrawAggregateMeanAvgnMSEPlot('/work/sr365/NA_compare/', 'ballistics')
         
     
+    """
     # NIPS version 
     MeanAvgnMinMSEvsTry_all('/home/sr365/multi_eval/')
     #datasets = ['meta_material', 'robotic_arm','sine_wave','ballistics']
     datasets = ['robotic_arm','sine_wave','ballistics']
     for dataset in datasets:
         DrawAggregateMeanAvgnMSEPlot('/home/sr365/multi_eval/', dataset)
+    """
     
     """
     # NIPS version on Groot
@@ -921,22 +923,20 @@ if __name__ == '__main__':
         DrawAggregateMeanAvgnMSEPlot(data_dir, dataset)
     """
 
-    """
     # Modulized version (ICML)
     #data_dir = '/data/users/ben/'  # I am groot!
     data_dir = '/home/sr365/'       # I am quad !
     #data_dir = '/work/sr365/'
     algo_list = ['cINN','INN','VAE','MDN','Random'] 
     #algo_list = ['Random']
-    exp_folder = 'ICML_exp_mm'
+    exp_folder = 'ICML_exp'
     for algo in algo_list:
         MeanAvgnMinMSEvsTry_all(os.path.join(data_dir, exp_folder, algo))
         #datasets = ['robotic_arm','ballistics']
-        datasets = ['sine_wave','meta_material']
         #datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
+        datasets = ['robotic_arm','sine_wave','ballistics']
         for dataset in datasets:
             DrawAggregateMeanAvgnMSEPlot(os.path.join(data_dir, exp_folder, algo), dataset)
-    """
     
     # Modulized version plots (ICML_0120)
     #data_dir = '/data/users/ben/'

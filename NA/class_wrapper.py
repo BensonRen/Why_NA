@@ -390,6 +390,16 @@ class Network(object):
                 np.savetxt(epoch_file, loss_list)
 
         
+        # Get the last epoch of MSE
+        if init_from_Xpred is None:
+            geometry_eval_input = self.initialize_from_uniform_to_dataset_distrib(geometry_eval)
+        else:
+            geometry_eval_input = geometry_eval
+        logit = self.model(geometry_eval_input)                     # Get the output
+        loss = self.make_loss(logit, target_spectra_expand, G=geometry_eval_input)         # Get the loss
+
+
+        
         if save_all:                # If saving all the results together instead of the first one
             mse_loss = np.reshape(np.sum(np.square(logit.cpu().data.numpy() - target_spectra_expand.cpu().data.numpy()), axis=1), [-1, 1])
             BDY_loss = self.get_boundary_loss_list_np(geometry_eval_input.cpu().data.numpy())
