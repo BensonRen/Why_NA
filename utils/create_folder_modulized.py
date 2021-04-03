@@ -9,18 +9,15 @@ import shutil
 # create_directory_folder = '/work/sr365/ICML_exp/'
 # create_directory_folder = '/home/sr365/ICML_exp_cINN_ball/'    # For quad
 #create_directory_folder = '/home/sr365/ICML_exp_ball_0.01/'    # For quad
-#create_directory_folder = '/home/sr365/ICML_exp_mm/'    # For quad
-create_directory_folder = '/home/sr365/ICML_exp/'    # For quad
+create_directory_folder = '/home/sr365/ICML_exp_mm/'    # For quad
+#create_directory_folder = '/home/sr365/ICML_exp_robo/'    # For quad
 #create_directory_folder = '/data/users/ben/ICML_exp_mm/'    # For Groot 
 # If testing_mode on, only one folder would be in the list: cINN_on_on/robotic
 testing_mode = False
 
 # Setting up the list of datasets and method to work on
-#dataset_list = ['ballistics']
-#dataset_list = ['meta_material','sine_wave']
-#dataset_list = ['meta_material']
 #dataset_list = ['meta_material','robotic_arm','sine_wave','ballistics']
-dataset_list = ['robotic_arm','sine_wave','ballistics']
+dataset_list = ['meta_material']
 #initializer_list = ['Random','cINN']
 initializer_list = ['Random','cINN','INN','VAE','MDN']
 optimizer_list_base = ['BP_off']
@@ -95,14 +92,12 @@ def get_folder_modulized(gpu=None, off_only=False):
     return sub_list
     """
 
-    # This is the allocation for quad 3090 
+    # This is the allocation for quad 3090 non_mm parts 
     if gpu is None:
         return folder_list 
     elif gpu == 0: 
         for folder in folder_list:
             if 'Random' in folder and 'BP_on' in folder:
-                sub_list.append(folder)
-            if 'MDN' in folder and 'BP_on' in folder:
                 sub_list.append(folder)
     elif gpu == 1:
         for folder in folder_list:
@@ -110,7 +105,8 @@ def get_folder_modulized(gpu=None, off_only=False):
                 sub_list.append(folder)
     elif gpu == 2: 
         for folder in folder_list:
-            sub_list.append(folder)
+            if 'MDN' in folder and 'BP_on' in folder:
+                sub_list.append(folder)
     elif gpu == 3: 
         for folder in folder_list:
             if 'INN' in folder and  'BP_on' in folder and 'cINN' not in folder:

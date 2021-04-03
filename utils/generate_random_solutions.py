@@ -11,11 +11,12 @@ from utils.helper_functions import simulator
 from Simulated_DataSets.Meta_material_Neural_Simulator.generate_mm_x import generate_meta_material
 
 #dataset_list = ['meta_material','robotic_arm','sine_wave','ballistics']
-dataset_list = ['robotic_arm','sine_wave','ballistics']
+#dataset_list = ['robotic_arm']
+#dataset_list = ['robotic_arm','sine_wave','ballistics']
 #dataset_list = ["sine_wave"]
-#dataset_list = ["meta_material"]
+dataset_list = ["meta_material"]
 #dataset_list = ["meta_material","sine_wave"]
-data_num = 1000
+data_num = 100
 trail_num = 2048
 
 # Where to steal the Xtruth, Ytruth file (This function can not produce Xtruth and Ytruth as it is just a random generator. However the evaluation needs a Xtruth and Ytruth file, therefore we are just going to steal the Truth files from the neighbouring folder
@@ -23,7 +24,7 @@ trail_num = 2048
 #truth_folder = '/work/sr365/ICML_exp/cINN_BP_off_FF_off/'
 
 #truth_folder = '/data/users/ben/ICML_exp_mm/cINN_BP_off_FF_off/' # I am Groot!
-truth_folder =  '/home/sr365/ICML_exp/cINN_BP_off_FF_off/'   # quad
+truth_folder =  '/home/sr365/ICML_exp_mm/cINN_BP_off_FF_off/'   # quad
 #truth_folder =  '/home/sr365/ICML_exp/cINN_BP_off_FF_off/'   # quad
 
 def generate_sine_wave(data_num):

@@ -44,7 +44,7 @@ def modulized_evaluate_from_model(model_dir, operate_dir, FF=False, BP=False):
     if BP:
         flags.backprop_step = 300 
     else:
-        flags.backprop_step = 1 
+        flags.backprop_step = 0 
     flags.test_ratio = get_test_ratio_helper(flags)
 
     if flags.data_set == 'meta_material':
@@ -104,9 +104,10 @@ def modulized_evaluate_different_dataset(gpu=None):
     """
     This function is to evaluate all different datasets in the model with one function call
     """
-    data_set_list = ["robotic_arm","sine_wave","ballistics"]
+    #data_set_list = ["robotic_arm","sine_wave","ballistics"]
+    #data_set_list = ["robotic_arm"]
     #data_set_list = ["meta_material","sine_wave"]
-    #data_set_list = ["meta_material"]
+    data_set_list = ["meta_material"]
     folder_list = get_folder_modulized(gpu=gpu)
     for folder in folder_list:
         # Skip Random for now

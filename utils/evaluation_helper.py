@@ -29,11 +29,11 @@ def get_test_ratio_helper(flags):
         #return 0.0625                        # 500 in total
     elif flags.data_set == 'robotic_arm':
         #return 0.02
-        return 0.1                          # 500 in total
+        return 0.02                          # 500 in total
         #return 0.01
         #return 0.01                          # 100 in total
     elif flags.data_set == 'meta_material':
-        return 0.001
+        return 0.01
         #return 0.02
         #return 0.1                        # 10000 in total for Meta material
     else:

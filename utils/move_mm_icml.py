@@ -8,8 +8,8 @@ if __name__ == '__main__':
     folders = get_folder_modulized()
     for folder in folders:
         print(folder)
-        if 'ICML_exp_mm' in folder:
-            target_folder = folder.replace('_mm', '')
+        if 'ICML_exp_robo' in folder:
+            target_folder = folder.replace('_robo', '')
             print('moving from ', folder, 'to folder ', target_folder)
             #shutil.move(os.path.join(target_folder), os.path.join(folder, 'meta_material'))
-            shutil.move(os.path.join(folder, 'meta_material'), os.path.join(target_folder))
+            shutil.move(os.path.join(folder, 'robotic_arm'), os.path.join(target_folder))

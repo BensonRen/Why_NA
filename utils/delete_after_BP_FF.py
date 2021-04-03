@@ -5,8 +5,9 @@ from utils.create_folder_modulized import check_modulized_yet
 # This is the program to delete all the duplicate Xtruth Ytruth files generated
 #input_dir =  '/home/sr365/ICML_exp_ball_0/'   # quad
 #input_dir =  '/home/sr365/ICML_exp/'   # quad
-input_dir =  '/home/sr365/ICML_exp/'   # quad
-#input_dir = '/data/users/ben/ICML_exp_mm/'    # I am Groot!
+input_dir =  '/home/sr365/ICML_exp_mm/'   # quad
+#input_dir = '/home/sr365/ICML_exp_robo/'# quad
+#input_dir = '/data/users/ben/ICML_exp_robo/'    # I am Groot!
 #input_dir = '/work/sr365/ICML_exp/'
 delete_mse_file_mode = True                            # Deleting the mse file for the forward filtering
 
