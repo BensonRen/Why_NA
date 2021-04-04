@@ -12,7 +12,8 @@ import numpy
 ###############
 #input_dir =  '/home/sr365/ICML_exp/'   # quad
 #input_dir = '/home/sr365/ICML_exp_robo/'    # For quad
-input_dir =  '/home/sr365/ICML_exp_mm/'   # quad
+input_dir =  '/home/sr365/ICML_MDN/'   # quad
+#input_dir =  '/home/sr365/ICML_exp_0402/'   # quad
 #input_dir =  '/home/sr365/multi_eval/'   # quad
 
 

@@ -9,17 +9,20 @@ import shutil
 # create_directory_folder = '/work/sr365/ICML_exp/'
 # create_directory_folder = '/home/sr365/ICML_exp_cINN_ball/'    # For quad
 #create_directory_folder = '/home/sr365/ICML_exp_ball_0.01/'    # For quad
-create_directory_folder = '/home/sr365/ICML_exp_mm/'    # For quad
+create_directory_folder = '/home/sr365/ICML_MDN'    # For quad
+#create_directory_folder = '/home/sr365/ICML_exp_0402/'    # For quad
 #create_directory_folder = '/home/sr365/ICML_exp_robo/'    # For quad
 #create_directory_folder = '/data/users/ben/ICML_exp_mm/'    # For Groot 
 # If testing_mode on, only one folder would be in the list: cINN_on_on/robotic
 testing_mode = False
 
 # Setting up the list of datasets and method to work on
-#dataset_list = ['meta_material','robotic_arm','sine_wave','ballistics']
-dataset_list = ['meta_material']
+dataset_list = ['meta_material','robotic_arm','sine_wave','ballistics']
+#dataset_list = ['meta_material']
 #initializer_list = ['Random','cINN']
-initializer_list = ['Random','cINN','INN','VAE','MDN']
+#initializer_list = ['Random','cINN','INN','VAE']
+#initializer_list = ['Random','cINN','INN','VAE','MDN']
+initializer_list = ['MDN']
 optimizer_list_base = ['BP_off']
 filter_list_base = ['FF_off']
 optimizer_list_full = ['BP_on','BP_off']
@@ -92,6 +95,7 @@ def get_folder_modulized(gpu=None, off_only=False):
     return sub_list
     """
 
+    """
     # This is the allocation for quad 3090 non_mm parts 
     if gpu is None:
         return folder_list 
@@ -107,11 +111,11 @@ def get_folder_modulized(gpu=None, off_only=False):
         for folder in folder_list:
             if 'MDN' in folder and 'BP_on' in folder:
                 sub_list.append(folder)
+            if 'VAE' in folder and  'BP_on' in folder:
+                sub_list.append(folder)
     elif gpu == 3: 
         for folder in folder_list:
             if 'INN' in folder and  'BP_on' in folder and 'cINN' not in folder:
-                sub_list.append(folder)
-            if 'VAE' in folder and  'BP_on' in folder:
                 sub_list.append(folder)
     elif gpu == 9:
         # special test case for easy testing
@@ -119,6 +123,7 @@ def get_folder_modulized(gpu=None, off_only=False):
             if 'Random' in folder and 'BP_on' in folder:
                 sub_list.append(folder)
     return sub_list
+    """
     
     """
     # This is the allocation for quad 3090 mm only
@@ -148,6 +153,33 @@ def get_folder_modulized(gpu=None, off_only=False):
     return sub_list
     """
         
+    # This is the allocation for quad 3090 MDN part 
+    if gpu is None:
+        return folder_list 
+    elif gpu == 0: 
+        for folder in folder_list:
+            if 'MDN' in folder and 'BP_on' in folder:
+                sub_list.append(folder)
+    elif gpu == 1:
+        for folder in folder_list:
+            if 'MDN' in folder and 'BP_on' in folder:
+                sub_list.append(folder)
+    elif gpu == 2: 
+        for folder in folder_list:
+            if 'MDN' in folder and 'BP_on' in folder:
+                sub_list.append(folder)
+    elif gpu == 3: 
+        for folder in folder_list:
+            if 'MDN' in folder and 'BP_on' in folder:
+                sub_list.append(folder)
+    elif gpu == 9:
+        # special test case for easy testing
+        for folder in folder_list:
+            if 'Random' in folder and 'BP_on' in folder:
+                sub_list.append(folder)
+    return sub_list
+    
+
 def check_modulized_yet(data_dir):
     """
     This function checks whether this folder has been modulized or not (Has it run NA/modulized_eval for BP and FF yet. By going through all the files in the folder and check if there are name with modulized in any of the file name, if there is, then return True, if none of the files in the folder has modulized, return False
@@ -218,7 +250,7 @@ def move_across_ICML_exp(dest_dir, src_dir):
 
 def main():
     # Only activate this line if you finished creating base inference
-    if os.path.isdir(os.path.join(create_directory_folder, 'cINN_BP_off_FF_off')):
+    if os.path.isdir(os.path.join(create_directory_folder, 'MDN_BP_off_FF_off')):
         duplicate_off_off_base_folders()
         return
     

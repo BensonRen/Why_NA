@@ -696,7 +696,7 @@ def DrawBoxPlots_multi_eval(data_dir, data_name, save_name='Box_plot'):
 
 
 def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot', 
-                                gif_flag=False, plot_points=51,resolution=None, dash_group='',
+                                gif_flag=False, plot_points=51,resolution=None, dash_group='nobody',
                                 dash_label='', solid_label=''): # Depth=2 now based on current directory structure
     """
     The function to draw the aggregate plot for Mean Average and Min MSEs
@@ -745,7 +745,7 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
     #print("printing the min_dict", min_dict)
        
     def plotDict(dict, name, data_name=None, logy=False, time_in_s_table=None, avg_dict=None, 
-                    plot_points=51,  resolution=None, err_dict=None, color_assign=False, dash_group='',
+                    plot_points=51,  resolution=None, err_dict=None, color_assign=False, dash_group='nobody',
                     dash_label='', solid_label=''):
         """
         :param name: the name to save the plot
@@ -791,9 +791,9 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
             #print(dict[key])
             if err_dict is None:
                 if color_assign:
-                    plt.plot(x_axis[:plot_points:resolution], dict[key][:plot_points:resolution],c=color_dict[key.split('_')[0]],label=key, linestyle=linestyle)
+                    line_axis, = plt.plot(x_axis[:plot_points:resolution], dict[key][:plot_points:resolution],c=color_dict[key.split('_')[0]],label=key, linestyle=linestyle)
                 else:
-                    plt.plot(x_axis[:plot_points:resolution], dict[key][:plot_points:resolution],label=key, linestyle=linestyle)
+                    line_axis, = plt.plot(x_axis[:plot_points:resolution], dict[key][:plot_points:resolution],label=key, linestyle=linestyle)
             else:
                 # This is the case where we plot the continuous error curve
                 if resolution is None:
@@ -801,16 +801,16 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
                     if linestyle == 'dashed':
                         label = None
                     line_axis, = plt.plot(x_axis[:plot_points], dict[key][:plot_points], color=color_dict[key.split('_')[0]], linestyle=linestyle, label=label)
-                    legend_list.append(line_axis)
                     lower = - err_dict[key][0, :plot_points] + np.ravel(dict[key][:plot_points])
                     higher = err_dict[key][1, :plot_points] + np.ravel(dict[key][:plot_points])
                     plt.fill_between(x_axis[:plot_points], lower, higher, color=color_dict[key.split('_')[0]], alpha=0.2)
                 else:
                     if color_assign:
-                        plt.errorbar(x_axis[:plot_points:resolution], dict[key][:plot_points:resolution],c=color_dict[key.split('_')[0]], yerr=err_dict[key][:, :plot_points:resolution], label=key.replace('_',' '), capsize=5, linestyle=linestyle)#, errorevery=resolution)#,
+                        line_axis = plt.errorbar(x_axis[:plot_points:resolution], dict[key][:plot_points:resolution],c=color_dict[key.split('_')[0]], yerr=err_dict[key][:, :plot_points:resolution], label=key.replace('_',' '), capsize=5, linestyle=linestyle)#, errorevery=resolution)#,
                     else:
-                        plt.errorbar(x_axis[:plot_points:resolution], dict[key][:plot_points:resolution], yerr=err_dict[key][:, :plot_points:resolution], label=key.replace('_',' '), capsize=5, linestyle=linestyle)#, errorevery=resolution)#,
+                        line_axis = plt.errorbar(x_axis[:plot_points:resolution], dict[key][:plot_points:resolution], yerr=err_dict[key][:, :plot_points:resolution], label=key.replace('_',' '), capsize=5, linestyle=linestyle)#, errorevery=resolution)#,
                             #dash_capstyle='round')#, uplims=True, lolims=True)
+            legend_list.append(line_axis)
         if logy:
             ax = plt.gca()
             ax.set_yscale('log')
@@ -843,7 +843,7 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
 
 
     plotDict(min_dict,'_minlog_quan2575.png', plot_points=plot_points, logy=True, avg_dict=avg_dict, err_dict=quan2575_dict, data_name=data_name,
-            dash_group=dash_group, dash_label=dash_label, solid_label=solid_label)
+            dash_group=dash_group, dash_label=dash_label, solid_label=solid_label, resolution=resolution)
     #plotDict(min_dict,'_min_quan2575.png', plot_points, resolution, logy=False, avg_dict=avg_dict, err_dict=quan2575_dict)
     #plotDict(min_dict,'_minlog_std.png', plot_points, resolution, logy=True, avg_dict=avg_dict, err_dict=std_dict)
     #plotDict(min_dict,'_min_std.png', plot_points, resolution, logy=False, avg_dict=avg_dict, err_dict=std_dict)
@@ -962,14 +962,15 @@ if __name__ == '__main__':
     #algo_list = ['Random']
     exp_folder = 'ICML_exp'
     for algo in algo_list:
-        MeanAvgnMinMSEvsTry_all(os.path.join(data_dir, exp_folder, algo))
-        #datasets = ['robotic_arm','ballistics']
+        #MeanAvgnMinMSEvsTry_all(os.path.join(data_dir, exp_folder, algo))
         #datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
-        datasets = ['robotic_arm','sine_wave','ballistics']
+        datasets = ['meta_material']
+        #datasets = ['robotic_arm','sine_wave','ballistics']
         for dataset in datasets:
-            DrawAggregateMeanAvgnMSEPlot(os.path.join(data_dir, exp_folder, algo), dataset)
-    """
+            DrawAggregateMeanAvgnMSEPlot(os.path.join(data_dir, exp_folder, algo), dataset, resolution = 5)
+     """
     
+    # GROOT! 
     # Modulized version plots (ICML_0120)
     #data_dir = '/data/users/ben/'
     ##data_dir = '/work/sr365/'
@@ -983,7 +984,7 @@ if __name__ == '__main__':
     #        DrawAggregateMeanAvgnMSEPlot(data_dir+ 'ICML_exp_0120/top_ones_'+algo+'/', dataset)
 
 
-    ## Draw the top ones
+    ####################### Draw the top ones #####################################################################
     #datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
     #draw_dir = '/data/users/ben/best_plot/'
     #for dataset in datasets:
@@ -1008,12 +1009,13 @@ if __name__ == '__main__':
     #folder = '/home/sr365/NA+Paper_plots/R5_NA_with_BP'
     #dash_group,dash_label,solid_label = 'FF_off','BP','BP+FF'
 
-    #datasets = ['robotic_arm','sine_wave','ballistics']
+    #datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
+    #datasets = ['meta_material']
     #for dataset in datasets:
     #    DrawAggregateMeanAvgnMSEPlot(folder, dataset, dash_group=dash_group, dash_label=dash_label, solid_label=solid_label)
 
     # Best ones
-    DrawAggregateMeanAvgnMSEPlot('/home/sr365/NA+Paper_plots/R6_best_ball', 'ballistics', dash_group='Random', dash_label='SOTA_prev', solid_label='best')
-    DrawAggregateMeanAvgnMSEPlot('/home/sr365/NA+Paper_plots/R6_best_robo', 'robotic_arm', dash_group='Random', dash_label='SOTA_prev', solid_label='best')
-    DrawAggregateMeanAvgnMSEPlot('/home/sr365/NA+Paper_plots/R6_best_sine', 'sine_wave', dash_group='Random', dash_label='SOTA_prev', solid_label='best')
-    #DrawAggregateMeanAvgnMSEPlot('home/sr365/NA+Paper_plots/R6_best_ball', 'ballistics', dash_group='Random', dash_label='SOTA_prev', solid_label='best')
+    #DrawAggregateMeanAvgnMSEPlot('/home/sr365/NA+Paper_plots/R6_best_ball', 'ballistics', dash_group='Random', dash_label='SOTA_prev', solid_label='best')
+    #DrawAggregateMeanAvgnMSEPlot('/home/sr365/NA+Paper_plots/R6_best_robo', 'robotic_arm', dash_group='Random', dash_label='SOTA_prev', solid_label='best')
+    #DrawAggregateMeanAvgnMSEPlot('/home/sr365/NA+Paper_plots/R6_best_sine', 'sine_wave', dash_group='Random', dash_label='SOTA_prev', solid_label='best')
+    DrawAggregateMeanAvgnMSEPlot('/home/sr365/NA+Paper_plots/R6_best_meta', 'meta_material', dash_group='Random', dash_label='SOTA_prev', solid_label='best')

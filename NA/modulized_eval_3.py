@@ -107,7 +107,9 @@ def modulized_evaluate_different_dataset(gpu=None):
     #data_set_list = ["robotic_arm","sine_wave","ballistics"]
     #data_set_list = ["robotic_arm"]
     #data_set_list = ["meta_material","sine_wave"]
-    data_set_list = ["meta_material"]
+    #data_set_list = ["meta_material"]
+    data_set_list = ["sine_wave"]
+    #data_set_list = ["robotic_arm","sine_wave","ballistics","meta_material"]
     folder_list = get_folder_modulized(gpu=gpu)
     for folder in folder_list:
         # Skip Random for now

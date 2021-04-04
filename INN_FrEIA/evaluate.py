@@ -78,8 +78,7 @@ def evaluate_different_dataset(multi_flag=False, eval_data_all=False, modulized_
      #data_set_list = ["meta_material","sine_wave"]
      #data_set_list = ["sine_wave","ballistics","robotic_arm"]
      #data_set_list = ["robotic_arm"]
-     data_set_list = ["meta_material"]
-     #data_set_list = ["meta_material","sine_wave","ballistics","robotic_arm"]
+     data_set_list = ["meta_material","sine_wave","ballistics","robotic_arm"]
      for eval_model in data_set_list:
         for j in range(1):
             useless_flags = flag_reader.read_flag()

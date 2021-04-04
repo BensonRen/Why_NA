@@ -5,9 +5,15 @@ import numpy as np
 import shutil
 
 source_dir = '/home/sr365/ICML_exp'
-dest_dir = '/home/sr365/NA+Paper_plots/R6_best_ball'
+#dest_dir = '/home/sr365/NA+Paper_plots/R1_comparing_with_baseline'
+#dest_dir = '/home/sr365/NA+Paper_plots/R2_FF_stuck'
+#dest_dir = '/home/sr365/NA+Paper_plots/R3_BP_with_base'
+#dest_dir = '/home/sr365/NA+Paper_plots/R4_FF_BP_compare'
+#dest_dir = '/home/sr365/NA+Paper_plots/R5_NA_with_BP'
+dest_dir = '/home/sr365/NA+Paper_plots/R6_best_meta'
 
 #dataset_list = ['robotic_arm','ballistics','sine_wave']
+#dataset_list = ['meta_material']
 # All the methods: [R M V I c] BP: [0 1] FF:[0 1]
 #folders_to_copy = ['R00','M00','V00','I00','C00']
 #folders_to_copy = ['R10','M10','V10','I10','C10']
@@ -21,11 +27,11 @@ dest_dir = '/home/sr365/NA+Paper_plots/R6_best_ball'
 #dataset_list = ['sine_wave']
 #folders_to_copy = ['R10','M01','V11','I01','C01']
 
-dataset_list = ['ballistics']
-folders_to_copy = ['R10','M01','V01','I10','C01']
+#dataset_list = ['ballistics']
+#folders_to_copy = ['R10','M01','V01','I10','C01']
 
-#dataset_list = ['meta_material']
-#folders_to_copy = ['R11','M11','V11','I11','C11']
+dataset_list = ['meta_material']
+folders_to_copy = ['R11','M11','V11','I11','C11']
 def decode_folder(code):
     """
     The function to decode the letter-[0,1]-[0,1] code to actual folder name in experiment setting
@@ -91,5 +97,7 @@ def copy_result_files():
             
 
 if __name__ == '__main__':
+    if not os.path.isdir(dest_dir):
+        os.makedirs(dest_dir)
     #print(decode_folder('C00'))
     copy_result_files()

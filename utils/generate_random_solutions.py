@@ -10,21 +10,23 @@ from utils.create_folder_modulized import get_folder_modulized
 from utils.helper_functions import simulator
 from Simulated_DataSets.Meta_material_Neural_Simulator.generate_mm_x import generate_meta_material
 
-#dataset_list = ['meta_material','robotic_arm','sine_wave','ballistics']
+dataset_list = ['meta_material','robotic_arm','sine_wave','ballistics']
 #dataset_list = ['robotic_arm']
 #dataset_list = ['robotic_arm','sine_wave','ballistics']
 #dataset_list = ["sine_wave"]
-dataset_list = ["meta_material"]
+#dataset_list = ["meta_material"]
 #dataset_list = ["meta_material","sine_wave"]
-data_num = 100
+data_num_base = 1000
 trail_num = 2048
+
+meta_data_num = 500
 
 # Where to steal the Xtruth, Ytruth file (This function can not produce Xtruth and Ytruth as it is just a random generator. However the evaluation needs a Xtruth and Ytruth file, therefore we are just going to steal the Truth files from the neighbouring folder
 #truth_folder = '/work/sr365/ICML_mm/cINN_BP_off_FF_off/'
 #truth_folder = '/work/sr365/ICML_exp/cINN_BP_off_FF_off/'
 
 #truth_folder = '/data/users/ben/ICML_exp_mm/cINN_BP_off_FF_off/' # I am Groot!
-truth_folder =  '/home/sr365/ICML_exp_mm/cINN_BP_off_FF_off/'   # quad
+truth_folder =  '/home/sr365/ICML_exp_0402/cINN_BP_off_FF_off/'   # quad
 #truth_folder =  '/home/sr365/ICML_exp/cINN_BP_off_FF_off/'   # quad
 
 def generate_sine_wave(data_num):
@@ -68,9 +70,11 @@ if __name__ == '__main__':
                 # Skip MM for now ONLY
                 #if 'meta_material' not in dataset:
                 #    continue;
+                data_num = data_num_base
                 output_dir = os.path.join(folder, dataset)
                 if dataset == 'meta_material':
                     generator = generate_meta_material
+                    data_num = meta_data_num
                 elif dataset == 'ballistics':
                     generator = generate_ballistics
                 elif dataset == 'sine_wave':
@@ -81,7 +85,8 @@ if __name__ == '__main__':
                 # Steal the Xtruth and Ytruth file from neighbouring folder
                 shutil.copyfile(os.path.join(truth_folder, dataset, 'Xtruth.csv'), os.path.join(output_dir, 'Xtruth.csv')) 
                 shutil.copyfile(os.path.join(truth_folder, dataset, 'Ytruth.csv'), os.path.join(output_dir, 'Ytruth.csv')) 
-
+                
+                
                 print("currently generating in folder:", os.path.join(folder, dataset))
                 # create a Xpred file for each of the trails
                 for i in range(trail_num):
