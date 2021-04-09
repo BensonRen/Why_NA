@@ -9,7 +9,9 @@ import shutil
 # create_directory_folder = '/work/sr365/ICML_exp/'
 # create_directory_folder = '/home/sr365/ICML_exp_cINN_ball/'    # For quad
 #create_directory_folder = '/home/sr365/ICML_exp_ball_0.01/'    # For quad
-create_directory_folder = '/home/sr365/ICML_MDN'    # For quad
+#create_directory_folder = '/home/sr365/ICML_exp_worse_10_times_NA/'    # For quad
+#create_directory_folder = '/home/sr365/ICML_exp_worse_50_times_NA/'    # For quad
+create_directory_folder = '/home/sr365/ICML_exp_worse_100_times_NA/'    # For quad
 #create_directory_folder = '/home/sr365/ICML_exp_0402/'    # For quad
 #create_directory_folder = '/home/sr365/ICML_exp_robo/'    # For quad
 #create_directory_folder = '/data/users/ben/ICML_exp_mm/'    # For Groot 
@@ -21,8 +23,8 @@ dataset_list = ['meta_material','robotic_arm','sine_wave','ballistics']
 #dataset_list = ['meta_material']
 #initializer_list = ['Random','cINN']
 #initializer_list = ['Random','cINN','INN','VAE']
-#initializer_list = ['Random','cINN','INN','VAE','MDN']
-initializer_list = ['MDN']
+initializer_list = ['Random','cINN','INN','VAE','MDN']
+#initializer_list = ['MDN']
 optimizer_list_base = ['BP_off']
 filter_list_base = ['FF_off']
 optimizer_list_full = ['BP_on','BP_off']
@@ -95,7 +97,6 @@ def get_folder_modulized(gpu=None, off_only=False):
     return sub_list
     """
 
-    """
     # This is the allocation for quad 3090 non_mm parts 
     if gpu is None:
         return folder_list 
@@ -123,7 +124,6 @@ def get_folder_modulized(gpu=None, off_only=False):
             if 'Random' in folder and 'BP_on' in folder:
                 sub_list.append(folder)
     return sub_list
-    """
     
     """
     # This is the allocation for quad 3090 mm only
@@ -151,7 +151,6 @@ def get_folder_modulized(gpu=None, off_only=False):
         # special test case for easy testing
         return folder_list 
     return sub_list
-    """
         
     # This is the allocation for quad 3090 MDN part 
     if gpu is None:
@@ -178,6 +177,7 @@ def get_folder_modulized(gpu=None, off_only=False):
             if 'Random' in folder and 'BP_on' in folder:
                 sub_list.append(folder)
     return sub_list
+    """
     
 
 def check_modulized_yet(data_dir):

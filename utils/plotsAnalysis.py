@@ -953,22 +953,21 @@ if __name__ == '__main__':
         DrawAggregateMeanAvgnMSEPlot(data_dir, dataset)
     """
 
-    """
     # Modulized version (ICML)
     #data_dir = '/data/users/ben/'  # I am groot!
     data_dir = '/home/sr365/'       # I am quad !
     #data_dir = '/work/sr365/'
     algo_list = ['cINN','INN','VAE','MDN','Random'] 
     #algo_list = ['Random']
-    exp_folder = 'ICML_exp'
+    exp_folder = 'ICML_exp_worse_10_times_NA'
+    #exp_folder = 'ICML_exp'
     for algo in algo_list:
-        #MeanAvgnMinMSEvsTry_all(os.path.join(data_dir, exp_folder, algo))
-        #datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
-        datasets = ['meta_material']
+        MeanAvgnMinMSEvsTry_all(os.path.join(data_dir, exp_folder, algo))
+        datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
+        #datasets = ['meta_material']
         #datasets = ['robotic_arm','sine_wave','ballistics']
         for dataset in datasets:
             DrawAggregateMeanAvgnMSEPlot(os.path.join(data_dir, exp_folder, algo), dataset, resolution = 5)
-     """
     
     # GROOT! 
     # Modulized version plots (ICML_0120)
@@ -1018,4 +1017,4 @@ if __name__ == '__main__':
     #DrawAggregateMeanAvgnMSEPlot('/home/sr365/NA+Paper_plots/R6_best_ball', 'ballistics', dash_group='Random', dash_label='SOTA_prev', solid_label='best')
     #DrawAggregateMeanAvgnMSEPlot('/home/sr365/NA+Paper_plots/R6_best_robo', 'robotic_arm', dash_group='Random', dash_label='SOTA_prev', solid_label='best')
     #DrawAggregateMeanAvgnMSEPlot('/home/sr365/NA+Paper_plots/R6_best_sine', 'sine_wave', dash_group='Random', dash_label='SOTA_prev', solid_label='best')
-    DrawAggregateMeanAvgnMSEPlot('/home/sr365/NA+Paper_plots/R6_best_meta', 'meta_material', dash_group='Random', dash_label='SOTA_prev', solid_label='best')
+    #DrawAggregateMeanAvgnMSEPlot('/home/sr365/NA+Paper_plots/R6_best_meta', 'meta_material', dash_group='Random', dash_label='SOTA_prev', solid_label='best')

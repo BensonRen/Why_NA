@@ -1,11 +1,10 @@
 import os
 import numpy
-from utils.create_folder_modulized import check_modulized_yet
-
+from utils.create_folder_modulized import check_modulized_yet, create_directory_folder
 # This is the program to delete all the duplicate Xtruth Ytruth files generated
+input_dir = create_directory_folder
 #input_dir =  '/home/sr365/ICML_exp_ball_0/'   # quad
 #input_dir =  '/home/sr365/ICML_exp/'   # quad
-input_dir =  '/home/sr365/ICML_exp_mm/'   # quad
 #input_dir = '/home/sr365/ICML_exp_robo/'# quad
 #input_dir = '/data/users/ben/ICML_exp_robo/'    # I am Groot!
 #input_dir = '/work/sr365/ICML_exp/'

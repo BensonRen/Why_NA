@@ -100,15 +100,14 @@ def get_state_of_BP_FF(folder):
         exit()
     return BP, FF
 
-def modulized_evaluate_different_dataset(gpu=None):
+def modulized_evaluate_different_dataset(gpu=None, model_prefix='retrain0'):
     """
     This function is to evaluate all different datasets in the model with one function call
     """
     #data_set_list = ["meta_material"]
-    #data_set_list = ["robotic_arm","sine_wave","ballistics","meta_material"]
-    #data_set_list = ["robotic_arm","sine_wave","ballistics"]
-    data_set_list = ["robotic_arm"]
-    #data_set_list = ["meta_material","sine_wave"]
+    #data_set_list = ["ballistics"]
+    data_set_list = ["robotic_arm","sine_wave","ballistics","meta_material"]
+    #data_set_list = ["robotic_arm"]
     folder_list = get_folder_modulized(gpu=gpu)
     for folder in folder_list:
         # Skip Random for now
@@ -123,7 +122,7 @@ def modulized_evaluate_different_dataset(gpu=None):
         for dataset in data_set_list:
             if check_modulized_yet(os.path.join(folder, dataset)):
                 continue;
-            modulized_evaluate_from_model(model_dir="retrain0" + dataset,
+            modulized_evaluate_from_model(model_dir=model_prefix + dataset,
                                       operate_dir=os.path.join(folder, dataset), BP=BP, FF=FF)
 
 if __name__ == '__main__':
@@ -142,4 +141,6 @@ if __name__ == '__main__':
     #####################
     #Modulized eval Here#
     #####################
-    modulized_evaluate_different_dataset(2)
+    #modulized_evaluate_different_dataset(2, model_prefix='10_times_worse_model_')
+    #modulized_evaluate_different_dataset(2, model_prefix='50_times_worse_model_')
+    modulized_evaluate_different_dataset(2, model_prefix='100_times_worse_model_')

@@ -296,3 +296,19 @@ def unnormalize_eval(x, x_max, x_min):
         x_avg = (x_max + x_min) / 2.
         x[:, i] = x[:, i] * x_range + x_avg
     return x
+
+def get_index_from_dataset_name(dataset_name):
+    """
+    Get the dataset index from the dataset name, starting from 0
+    """
+    if dataset_name == 'ballistics':
+        return 0
+    elif dataset_name == 'sine_wave':
+        return 1
+    elif dataset_name == 'robotic_arm':
+        return 2
+    elif dataset_name == 'meta_material':
+        return 3
+    else:
+        print("In helper_function, get_index_from_dataset_name, your dataset_name is incorrect")
+        quit()
