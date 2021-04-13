@@ -300,7 +300,7 @@ class Network(object):
         print("evalution output pattern:", Ypred_file)
 
         # Time keeping
-        tk = time_keeper(time_keeping_file=os.path.join(save_dir, 'evaluation_time.txt'))
+        #tk = time_keeper(time_keeping_file=os.path.join(save_dir, 'evaluation_time.txt'))
 
         # Open those files to append
         with open(Xtruth_file, 'a') as fxt,open(Ytruth_file, 'a') as fyt,\
@@ -313,7 +313,7 @@ class Network(object):
                 # Initialize the geometry first
                 Xpred, Ypred, loss = self.evaluate_one(spectra, save_dir=save_dir, save_all=save_all, ind=ind,
                                                         MSE_Simulator=MSE_Simulator, save_misc=save_misc, save_Simulator_Ypred=save_Simulator_Ypred)
-                tk.record(ind)                          # Keep the time after each evaluation for backprop
+                #tk.record(ind)                          # Keep the time after each evaluation for backprop
                 # self.plot_histogram(loss, ind)                                # Debugging purposes
                 np.savetxt(fxt, geometry.cpu().data.numpy())
                 np.savetxt(fyt, spectra.cpu().data.numpy())
@@ -323,7 +323,7 @@ class Network(object):
         return Ypred_file, Ytruth_file
 
     def evaluate_one(self, target_spectra, save_dir='data/', MSE_Simulator=False ,save_all=False, ind=None, save_misc=False, 
-                        save_Simulator_Ypred=True, init_from_Xpred=None, FF=True, save_MSE_each_epoch=False):
+                        save_Simulator_Ypred=True, init_from_Xpred=None, FF=True, save_MSE_each_epoch=False, save_output=True):
         """
         The function which being called during evaluation and evaluates one target y using # different trails
         :param target_spectra: The target spectra/y to backprop to 
@@ -337,6 +337,7 @@ class Network(object):
         :return: MSE_list: The list of MSE at the last stage
         :param FF(forward_filtering): [default to be true for historical reason] The flag to control whether use forward filtering or not
         :param save_MSE_each_epoch: To check the MSE progress of backprop
+        :param save_output: Default to be true, however it is turned off during the timing function since the buffer time is not considered
         """
 
         # Initialize the geometry_eval or the initial guess xs
@@ -438,7 +439,8 @@ class Network(object):
                 save_model_str_FF_off = saved_model_str.replace('BP_on_FF_on', 'BP_on_FF_off')
                 Ypred_file_FF_off = Ypred_file.replace('BP_on_FF_on', 'BP_on_FF_off')
                 Xpred_file_FF_off = Xpred_file.replace('BP_on_FF_on', 'BP_on_FF_off')
-            if self.flags.data_set != 'meta_material':  # This is for meta-meterial dataset, since it does not have a simple simulator
+
+            if self.flags.data_set != 'meta_material' and save_output:  # This is for meta-meterial dataset, since it does not have a simple simulator
                 # 2 options: simulator/logit
                 Ypred = simulator(self.flags.data_set, geometry_eval_input.cpu().data.numpy())
                 if not save_Simulator_Ypred:            # The default is the simulator Ypred output
@@ -454,13 +456,13 @@ class Network(object):
                     with open(Xpred_file_FF_off, 'a') as fxp, open(Ypred_file_FF_off, 'a') as fyp:
                         np.savetxt(fyp, Ypred[good_index_FF_off, :])
                         np.savetxt(fxp, geometry_eval_input.cpu().data.numpy()[good_index_FF_off, :])
-            else:
+            elif save_output:
                 with open(Xpred_file, 'a') as fxp:
                     np.savetxt(fxp, geometry_eval_input.cpu().data.numpy()[good_index, :])
                 if 'BP_on_FF_on' in save_dir:
                     with open(Xpred_file_FF_off, 'a') as fxp:
                         np.savetxt(fxp, geometry_eval_input.cpu().data.numpy()[good_index_FF_off, :])
-            
+
             ###########################################
             # 02.02 for emperically proff of NA bound #
             ###########################################
@@ -483,7 +485,7 @@ class Network(object):
         best_estimate_index = np.argmin(MSE_list)
         #print("The best performing one is:", best_estimate_index)
         Xpred_best = np.reshape(np.copy(geometry_eval_input.cpu().data.numpy()[best_estimate_index, :]), [1, -1])
-        if save_Simulator_Ypred and self.flags.data_set != 'meta_material':
+        if save_Simulator_Ypred and self.flags.data_set != 'meta_material' and save_output:
             Ypred = simulator(self.flags.data_set, geometry_eval_input.cpu().data.numpy())
             if len(np.shape(Ypred)) == 1:           # If this is the ballistics dataset where it only has 1d y'
                 Ypred = np.reshape(Ypred, [-1, 1])

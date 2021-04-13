@@ -9,6 +9,9 @@ from utils.helper_functions import get_index_from_dataset_name
 
 ds_list = ['ball','sine','robo','meta']
 
+# This color dict is extracted from the plotsAnalysis.py file next door
+color_dict = {"VAE": "blueviolet","cINN":"crimson", 
+                        "INN":"cornflowerblue", "Random": "limegreen","MDN": "darkorange"}
 def get_Xpred_mat_from_folder(data_dir):
     """
     This function gets the Xprediction map from the giant folderthat contains all the multi_eval files.
@@ -134,24 +137,31 @@ def plot_pw_dist(pw_dist_mat_file, save_dir):
     for ds in ds_list:
         print('dataset=', ds)
         BP_off_FF_off, BP_off_FF_on, BP_on_FF_off, BP_on_FF_on = [], [], [], []
+        # baseline normalizer is random init
+        base = df[ds]['Random_BP_off_FF_off']
         for method in method_list:
             for BP_FF in BP_FF_list:
                 row_index = method + '_' + BP_FF
-                eval(BP_FF).append(df[ds][row_index])
+                eval(BP_FF).append(df[ds][row_index]/base)
         
         print(BP_off_FF_off)
         # Drawing
-        f = plt.figure()
+        f = plt.figure(figsize=[6,3])
         ax = plt.gca()
         X = np.arange(len(method_list))
         offset = 0
         for BP_FF in BP_FF_list:
             ax.bar(X + offset, eval(BP_FF), width=0.2, label=BP_FF)
             offset += 0.2
-        plt.legend()
+        #plt.legend()
         plt.xticks(0.3+X, method_list)
-        plt.ylabel('avg pair-wise distance')
-        plt.title('{} avg pair-wise distance for initializer'.format(ds))
+        colors = [color_dict[method] for method in method_list]
+        # Set color 
+        for xtick, color in zip(ax.get_xticklabels(), colors):
+            print(xtick)
+            xtick.set_color(color)
+        #plt.ylabel('avg pair-wise distance')
+        #plt.title('{} avg pair-wise distance for initializer'.format(ds))
         plt.savefig(os.path.join(save_dir, '{}_avg_pw_distance.png'.format(ds)))
 
 

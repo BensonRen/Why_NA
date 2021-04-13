@@ -44,21 +44,22 @@ def retrain_different_dataset(index):
      """
      from utils.helper_functions import load_flags
      #data_set_list = ["meta_material","robotic_arm","sine_wave","ballistics"]
-     data_set_list = ["sine_wave","ballistics"]
-     #data_set_list = ["robotic_arm"]
+     #data_set_list = ["robotic_arm","ballistics"]
+     data_set_list = ["robotic_arm"]
      #data_set_list = ["ballistics"]
      for eval_model in data_set_list:
-        flags = load_flags(os.path.join("models", 'retrain0' + eval_model))
-        print('dataset {}, bvl = {}'.format(flags.data_set, flags.best_validation_loss))
-        # change the stop threshold and reset the bvl
-        flags.stop_threshold = index * flags.best_validation_loss
-        flags.best_validation_loss = 999
-        
-        flags.model_name = '{}_times_worse_model_'.format(index) + eval_model
-        flags.geoboundary = [-1, 1, -1, 1]     # the geometry boundary of meta-material dataset is already normalized in current version
-        flags.train_step = 500
-        flags.test_ratio = 0.2
-        training_from_flag(flags)
+        for i in range(10):
+            flags = load_flags(os.path.join("models", 'retrain0' + eval_model))
+            print('dataset {}, bvl = {}'.format(flags.data_set, flags.best_validation_loss))
+            # change the stop threshold and reset the bvl
+            flags.stop_threshold = index * flags.best_validation_loss
+            flags.best_validation_loss = 999
+            
+            flags.model_name = '{}_times_worse_model_trail_{}_'.format(index, i) + eval_model
+            flags.geoboundary = [-1, 1, -1, 1]     # the geometry boundary of meta-material dataset is already normalized in current version
+            flags.train_step = 500
+            flags.test_ratio = 0.2
+            training_from_flag(flags)
         
 
 if __name__ == '__main__':
@@ -67,6 +68,6 @@ if __name__ == '__main__':
 
     # Do the retraining for all the data set to get the training 
     #for i in range(1):
-    for i in [10, 50, 100]:
+    for i in [60, 70, 80, 90]:
         retrain_different_dataset(i)
 

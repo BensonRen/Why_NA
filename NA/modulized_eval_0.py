@@ -19,6 +19,7 @@ from utils.plotsAnalysis import get_xpred_ytruth_xtruth_from_folder
 from utils.plotsAnalysis import reshape_xpred_list_to_mat 
 from utils.create_folder_modulized import get_folder_modulized
 from utils.create_folder_modulized import check_modulized_yet
+from utils.time_recorder import time_keeper
 # Libs
 import numpy as np
 import matplotlib.pyplot as plt
@@ -118,12 +119,18 @@ def modulized_evaluate_different_dataset(gpu=None, model_prefix='retrain0'):
         if FF is False:
             continue;
         print("currently working on folder", folder)
+        tk = time_keeper(time_keeping_file=os.path.join(folder, 'eval_dataset_time.txt'))
+        tk.record('starts!')
+        ind = 0
         # Work on each dataset
         for dataset in data_set_list:
             if check_modulized_yet(os.path.join(folder, dataset)):
                 continue;
             modulized_evaluate_from_model(model_dir=model_prefix + dataset,
                                       operate_dir=os.path.join(folder, dataset), BP=BP, FF=FF)
+            tk.record(dataset)
+            tk.record(ind)
+            ind += 1
 
 if __name__ == '__main__':
     # Read the flag, however only the flags.eval_model is used and others are not used
@@ -141,6 +148,7 @@ if __name__ == '__main__':
     #####################
     #Modulized eval Here#
     #####################
+    modulized_evaluate_different_dataset(gpu=2)
     #modulized_evaluate_different_dataset(0, model_prefix='10_times_worse_model_')
     #modulized_evaluate_different_dataset(0, model_prefix='50_times_worse_model_')
-    modulized_evaluate_different_dataset(0, model_prefix='100_times_worse_model_')
+    #modulized_evaluate_different_dataset(0, model_prefix='100_times_worse_model_')

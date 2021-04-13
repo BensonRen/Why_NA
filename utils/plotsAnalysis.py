@@ -696,7 +696,7 @@ def DrawBoxPlots_multi_eval(data_dir, data_name, save_name='Box_plot'):
 
 
 def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot', 
-                                gif_flag=False, plot_points=51,resolution=None, dash_group='nobody',
+                                gif_flag=False, plot_points=50,resolution=None, dash_group='nobody',
                                 dash_label='', solid_label=''): # Depth=2 now based on current directory structure
     """
     The function to draw the aggregate plot for Mean Average and Min MSEs
@@ -745,8 +745,8 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
     #print("printing the min_dict", min_dict)
        
     def plotDict(dict, name, data_name=None, logy=False, time_in_s_table=None, avg_dict=None, 
-                    plot_points=51,  resolution=None, err_dict=None, color_assign=False, dash_group='nobody',
-                    dash_label='', solid_label=''):
+                    plot_points=50,  resolution=None, err_dict=None, color_assign=False, dash_group='nobody',
+                    dash_label='', solid_label='', plot_xlabel=False):
         """
         :param name: the name to save the plot
         :param dict: the dictionary to plot
@@ -763,6 +763,11 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
         color_dict = {"VAE": "blueviolet","cINN":"crimson", 
                         "INN":"cornflowerblue", "Random": "limegreen","MDN": "darkorange"}
         f = plt.figure(figsize=[6,3])
+        ax = plt.gca()
+        ax.spines['bottom'].set_color('black')
+        ax.spines['top'].set_color('black')
+        ax.spines['left'].set_color('black')
+        ax.spines['right'].set_color('black')
         text_pos = 0.01
         # List for legend
         legend_list = []
@@ -817,16 +822,14 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
         print(legend_list)
         legend_list.append(Line2D([0], [0], color='k', linestyle='dashed', lw=1, label=dash_label))
         legend_list.append(Line2D([0], [0], color='k', linestyle='solid', lw=1, label=solid_label))
-        ax.legend(handles=legend_list, loc=1, ncol=2, prop={'size':8})
+        #ax.legend(handles=legend_list, loc=1, ncol=2, prop={'size':8})
 
-        
-        
-        if time_in_s_table is not None:
+        if time_in_s_table is not None and plot_xlabel:
             plt.xlabel('inference time (s)')
-        else:
+        elif plot_xlabel:
             plt.xlabel('# of inference made (T)')
         #plt.ylabel('MSE')
-        plt.xlim([-1, plot_points+2])
+        plt.xlim([1, plot_points])
         if 'ball' in data_name:
             data_name = 'D1: ' + data_name
         elif 'sine' in data_name:
@@ -836,13 +839,23 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
         elif 'meta' in data_name:
             data_name = 'D4: ' + data_name
 
-        plt.title(data_name.replace('_',' '), fontsize=20)
-        plt.grid(True, axis='both',which='both',color='b',alpha=0.3)
-        plt.savefig(os.path.join(data_dir, data_name + save_name + name), transparent=True, dpi=1000)
+        plt.grid(True, axis='both',which='major',color='b',alpha=0.2)
+        #plt.title(data_name.replace('_',' '), fontsize=20)
+        ax = plt.gca()
+        
+        data_index = int(data_name.split(':')[0].split('D')[-1])
+        if data_index % 2 == 0: # If this is a even number
+            ax.yaxis.tick_right()
+        else:
+            ax.yaxis.tick_left()
+        if data_index < 3:
+            ax.xaxis.tick_top()
+        plt.xticks([1, 10, 20, 30, 40, 50])
+        plt.savefig(os.path.join(data_dir, data_name + save_name + name), transparent=True, dpi=300)
         plt.close('all')
 
 
-    plotDict(min_dict,'_minlog_quan2575.png', plot_points=plot_points, logy=True, avg_dict=avg_dict, err_dict=quan2575_dict, data_name=data_name,
+    ax = plotDict(min_dict,'_minlog_quan2575.png', plot_points=plot_points, logy=True, avg_dict=avg_dict, err_dict=quan2575_dict, data_name=data_name,
             dash_group=dash_group, dash_label=dash_label, solid_label=solid_label, resolution=resolution)
     #plotDict(min_dict,'_min_quan2575.png', plot_points, resolution, logy=False, avg_dict=avg_dict, err_dict=quan2575_dict)
     #plotDict(min_dict,'_minlog_std.png', plot_points, resolution, logy=True, avg_dict=avg_dict, err_dict=std_dict)
@@ -856,7 +869,8 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
             plotDict(min_dict, str(i), logy=True, plot_points=i)
         for i in range(20,1000,20):
             plotDict(min_dict, str(i), logy=True, plot_points=i)
-
+    
+    return ax
 
 
 def DrawEvaluationTime(data_dir, data_name, save_name='evaluation_time', logy=False, limit=1000):
@@ -959,7 +973,7 @@ if __name__ == '__main__':
     #data_dir = '/work/sr365/'
     algo_list = ['cINN','INN','VAE','MDN','Random'] 
     #algo_list = ['Random']
-    exp_folder = 'ICML_exp_worse_10_times_NA'
+    exp_folder = 'ICML_exp_worse_100_times_NA'
     #exp_folder = 'ICML_exp'
     for algo in algo_list:
         MeanAvgnMinMSEvsTry_all(os.path.join(data_dir, exp_folder, algo))
@@ -967,7 +981,8 @@ if __name__ == '__main__':
         #datasets = ['meta_material']
         #datasets = ['robotic_arm','sine_wave','ballistics']
         for dataset in datasets:
-            DrawAggregateMeanAvgnMSEPlot(os.path.join(data_dir, exp_folder, algo), dataset, resolution = 5)
+            DrawAggregateMeanAvgnMSEPlot(os.path.join(data_dir, exp_folder, algo), dataset, dash_group='off_FF_off',dash_label='raw init', solid_label='others')
+            #DrawAggregateMeanAvgnMSEPlot(os.path.join(data_dir, exp_folder, algo), dataset, resolution = 5)
     
     # GROOT! 
     # Modulized version plots (ICML_0120)
@@ -983,12 +998,12 @@ if __name__ == '__main__':
     #        DrawAggregateMeanAvgnMSEPlot(data_dir+ 'ICML_exp_0120/top_ones_'+algo+'/', dataset)
 
 
-    ####################### Draw the top ones #####################################################################
     #datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
     #draw_dir = '/data/users/ben/best_plot/'
     #for dataset in datasets:
     #    DrawAggregateMeanAvgnMSEPlot(draw_dir + dataset , dataset)
 
+    ####################### Draw the top ones #####################################################################
     ################
     # Result plots #
     ################
