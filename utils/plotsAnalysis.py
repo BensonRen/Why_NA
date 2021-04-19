@@ -15,7 +15,7 @@ from scipy.sparse.csgraph import minimum_spanning_tree
 from matplotlib.lines import Line2D
 
 def InferenceAccuracyExamplePlot(model_name, save_name, title, sample_num=10,  fig_size=(15,5), random_seed=1,
-                                 target_region=[0,300 ]):
+                                 target_region=[0,300]):
     """
     The function to plot the Inference accuracy and compare with FFDS algorithm.
     It takes the Ypred and Ytruth file as input and plot the first <sample_num> of spectras.
@@ -467,7 +467,8 @@ def get_mse_mat_from_folder(data_dir):
     ####################################################################
     if 'NA' in data_dir or 'on' in data_dir: 
         l, w = np.shape(Yt)
-        num_trails = 2048
+        num_trails = 2048 
+        #num_trails = 32768
         Ypred_mat = np.zeros([l, num_trails, w])
         check_full = np.zeros(l)                                     # Safety check for completeness
         for files in os.listdir(data_dir):
@@ -481,7 +482,7 @@ def get_mse_mat_from_folder(data_dir):
                     Yp = Yp[:num_trails,:]
                 number_str = files.split('inference')[-1][:-4]
                 print(number_str)
-                number = int(files.split('inference')[-1][:-4])
+                number = int(number_str)
                 Ypred_mat[number, :, :] = Yp
                 check_full[number] = 1
         assert np.sum(check_full) == l, 'Your list is not complete'
@@ -697,7 +698,7 @@ def DrawBoxPlots_multi_eval(data_dir, data_name, save_name='Box_plot'):
 
 def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot', 
                                 gif_flag=False, plot_points=50,resolution=None, dash_group='nobody',
-                                dash_label='', solid_label=''): # Depth=2 now based on current directory structure
+                                dash_label='', solid_label='',worse_model_mode=False): # Depth=2 now based on current directory structure
     """
     The function to draw the aggregate plot for Mean Average and Min MSEs
     :param data_dir: The mother directory to call
@@ -746,7 +747,7 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
        
     def plotDict(dict, name, data_name=None, logy=False, time_in_s_table=None, avg_dict=None, 
                     plot_points=50,  resolution=None, err_dict=None, color_assign=False, dash_group='nobody',
-                    dash_label='', solid_label='', plot_xlabel=False):
+                    dash_label='', solid_label='', plot_xlabel=False, worse_model_mode=False):
         """
         :param name: the name to save the plot
         :param dict: the dictionary to plot
@@ -758,10 +759,16 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
         :param err_dict: The error bar dictionary which takes the error bar input
         :param avg_dict: The average dict for plotting the starting point
         :param dash_group: The group of plots to use dash line
+        :param dash_label: The legend to write for dash line
+        :param solid_label: The legend to write for solid line
+        :param plot_xlabel: The True or False flag for plotting the x axis label or not
+        :param worse_model_mode: The True or False flag for plotting worse model mode (1X, 10X, 50X, 100X worse model)
         """
+        if worse_model_mode:
+            color_dict = {"(1X": "limegreen", "(10X": "blueviolet", "(50X":"cornflowerblue", "(100X": "darkorange"}
+        else:
+            color_dict = {"VAE": "blueviolet","cINN":"crimson", "INN":"cornflowerblue", "Random": "limegreen","MDN": "darkorange"}
         
-        color_dict = {"VAE": "blueviolet","cINN":"crimson", 
-                        "INN":"cornflowerblue", "Random": "limegreen","MDN": "darkorange"}
         f = plt.figure(figsize=[6,3])
         ax = plt.gca()
         ax.spines['bottom'].set_color('black')
@@ -771,6 +778,8 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
         text_pos = 0.01
         # List for legend
         legend_list = []
+        print("All the keys=", dict.keys())
+        print("All color keys=", color_dict.keys())
         for key in sorted(dict.keys()):
             ######################################################
             # This is for 02.02 getting the T=1, 50, 1000 result #
@@ -791,8 +800,9 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
             x_axis += 1
             if time_in_s_table is not None:
                 x_axis *= time_in_s_table[data_name][key]
-            print("printing", name)
-            #print(key)
+            #print("printing", name)
+            
+            print('key = ', key)
             #print(dict[key])
             if err_dict is None:
                 if color_assign:
@@ -805,10 +815,12 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
                     label = key.split('_')[0] 
                     if linestyle == 'dashed':
                         label = None
-                    line_axis, = plt.plot(x_axis[:plot_points], dict[key][:plot_points], color=color_dict[key.split('_')[0]], linestyle=linestyle, label=label)
+                    color_key = key.split('_')[0].split(')')[0] # '_' is for separating BP_ox_FF_ox and ')' is for worse model
+                    #print("color key = ", color_key)
+                    line_axis, = plt.plot(x_axis[:plot_points], dict[key][:plot_points], color=color_dict[color_key], linestyle=linestyle, label=label)
                     lower = - err_dict[key][0, :plot_points] + np.ravel(dict[key][:plot_points])
                     higher = err_dict[key][1, :plot_points] + np.ravel(dict[key][:plot_points])
-                    plt.fill_between(x_axis[:plot_points], lower, higher, color=color_dict[key.split('_')[0]], alpha=0.2)
+                    plt.fill_between(x_axis[:plot_points], lower, higher, color=color_dict[color_key], alpha=0.2)
                 else:
                     if color_assign:
                         line_axis = plt.errorbar(x_axis[:plot_points:resolution], dict[key][:plot_points:resolution],c=color_dict[key.split('_')[0]], yerr=err_dict[key][:, :plot_points:resolution], label=key.replace('_',' '), capsize=5, linestyle=linestyle)#, errorevery=resolution)#,
@@ -856,7 +868,7 @@ def DrawAggregateMeanAvgnMSEPlot(data_dir, data_name, save_name='aggregate_plot'
 
 
     ax = plotDict(min_dict,'_minlog_quan2575.png', plot_points=plot_points, logy=True, avg_dict=avg_dict, err_dict=quan2575_dict, data_name=data_name,
-            dash_group=dash_group, dash_label=dash_label, solid_label=solid_label, resolution=resolution)
+            dash_group=dash_group, dash_label=dash_label, solid_label=solid_label, resolution=resolution, worse_model_mode=worse_model_mode)
     #plotDict(min_dict,'_min_quan2575.png', plot_points, resolution, logy=False, avg_dict=avg_dict, err_dict=quan2575_dict)
     #plotDict(min_dict,'_minlog_std.png', plot_points, resolution, logy=True, avg_dict=avg_dict, err_dict=std_dict)
     #plotDict(min_dict,'_min_std.png', plot_points, resolution, logy=False, avg_dict=avg_dict, err_dict=std_dict)
@@ -967,13 +979,15 @@ if __name__ == '__main__':
         DrawAggregateMeanAvgnMSEPlot(data_dir, dataset)
     """
 
+    """
     # Modulized version (ICML)
     #data_dir = '/data/users/ben/'  # I am groot!
     data_dir = '/home/sr365/'       # I am quad !
     #data_dir = '/work/sr365/'
     algo_list = ['cINN','INN','VAE','MDN','Random'] 
     #algo_list = ['Random']
-    exp_folder = 'ICML_exp_worse_100_times_NA'
+    exp_folder = 'ICML_exp_0402'
+    #exp_folder = 'ICML_exp_worse_100_times_NA'
     #exp_folder = 'ICML_exp'
     for algo in algo_list:
         MeanAvgnMinMSEvsTry_all(os.path.join(data_dir, exp_folder, algo))
@@ -983,7 +997,8 @@ if __name__ == '__main__':
         for dataset in datasets:
             DrawAggregateMeanAvgnMSEPlot(os.path.join(data_dir, exp_folder, algo), dataset, dash_group='off_FF_off',dash_label='raw init', solid_label='others')
             #DrawAggregateMeanAvgnMSEPlot(os.path.join(data_dir, exp_folder, algo), dataset, resolution = 5)
-    
+    """
+
     # GROOT! 
     # Modulized version plots (ICML_0120)
     #data_dir = '/data/users/ben/'
@@ -1002,34 +1017,62 @@ if __name__ == '__main__':
     #draw_dir = '/data/users/ben/best_plot/'
     #for dataset in datasets:
     #    DrawAggregateMeanAvgnMSEPlot(draw_dir + dataset , dataset)
-
+    
+    #MeanAvgnMinMSEvsTry_all('/home/sr365/Why_NA/NA_loss_surface/NA_true_SGD_30k_init/')
+    #MeanAvgnMinMSEvsTry_all('/home/sr365/ICML_exp_0412')
+    #MeanAvgnMinMSEvsTry_all('/home/sr365/ICML_exp_retrain_1')
+    #MeanAvgnMinMSEvsTry_all('/home/sr365/ICML_exp_worse_10_times')
+    #MeanAvgnMinMSEvsTry_all('/home/sr365/ICML_exp_worse_50_times')
+    #MeanAvgnMinMSEvsTry_all('/home/sr365/ICML_exp_worse_100_times')
+    
     ####################### Draw the top ones #####################################################################
     ################
     # Result plots #
     ################
-    # Drawing for paper plotting
-    #folder = '/home/sr365/NA+Paper_plots/R1_comparing_with_baseline'
-    #dash_group,dash_label,solid_label = 'Random','baseline',' '
+    # Drawing for paper 
+    folder_mother = '/home/sr365/NA+Paper_plots/retrain_1'
     
-    #folder = '/home/sr365/NA+Paper_plots/R2_FF_stuck'
+    #folder = os.path.join(folder_mother, 'R2_FF_stuck')
     #dash_group,dash_label,solid_label = 'FF_off','baseline','FF'
     
-    #folder = '/home/sr365/NA+Paper_plots/R3_BP_with_base'
+    #folder = os.path.join(folder_mother, 'R3_BP_with_base')
     #dash_group,dash_label,solid_label = 'BP_off','baseline','BP'
     
-    #folder = '/home/sr365/NA+Paper_plots/R4_FF_BP_compare'
+    #folder = os.path.join(folder_mother, 'R4_FF_BP_compare')
     #dash_group,dash_label,solid_label = 'BP_off','FF','BP'
 
-    #folder = '/home/sr365/NA+Paper_plots/R5_NA_with_BP'
-    #dash_group,dash_label,solid_label = 'FF_off','BP','BP+FF'
+    folder = os.path.join(folder_mother, 'R5_NA_with_BP')
+    dash_group,dash_label,solid_label = 'FF_off','BP','BP+FF'
 
-    #datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
+    # desolate
+    #folder = os.path.join(folder_mother, 'R1_comparing_with_baseline')
+    #dash_group,dash_label,solid_label = 'Random','baseline',' '
+    
+
+    datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
     #datasets = ['meta_material']
-    #for dataset in datasets:
-    #    DrawAggregateMeanAvgnMSEPlot(folder, dataset, dash_group=dash_group, dash_label=dash_label, solid_label=solid_label)
+    for dataset in datasets:
+        DrawAggregateMeanAvgnMSEPlot(folder, dataset, dash_group=dash_group, dash_label=dash_label, solid_label=solid_label)
 
     # Best ones
-    #DrawAggregateMeanAvgnMSEPlot('/home/sr365/NA+Paper_plots/R6_best_ball', 'ballistics', dash_group='Random', dash_label='SOTA_prev', solid_label='best')
-    #DrawAggregateMeanAvgnMSEPlot('/home/sr365/NA+Paper_plots/R6_best_robo', 'robotic_arm', dash_group='Random', dash_label='SOTA_prev', solid_label='best')
-    #DrawAggregateMeanAvgnMSEPlot('/home/sr365/NA+Paper_plots/R6_best_sine', 'sine_wave', dash_group='Random', dash_label='SOTA_prev', solid_label='best')
-    #DrawAggregateMeanAvgnMSEPlot('/home/sr365/NA+Paper_plots/R6_best_meta', 'meta_material', dash_group='Random', dash_label='SOTA_prev', solid_label='best')
+    #DrawAggregateMeanAvgnMSEPlot(os.path.join(folder_mother, 'R6_best_ball', 'ballistics', dash_group='Random', dash_label='SOTA_prev', solid_label='best')
+    #DrawAggregateMeanAvgnMSEPlot(os.path.join(folder_mother, 'R6_best_robo', 'robotic_arm', dash_group='Random', dash_label='SOTA_prev', solid_label='best')
+    #DrawAggregateMeanAvgnMSEPlot(os.path.join(folder_mother, 'R6_best_sine', 'sine_wave', dash_group='Random', dash_label='SOTA_prev', solid_label='best')
+    #DrawAggregateMeanAvgnMSEPlot(os.path.join(folder_mother, 'R6_best_meta', 'meta_material', dash_group='Random', dash_label='SOTA_prev', solid_label='best')
+
+
+    ################################################
+    # Appendix worse model comparison Result plots #
+    ################################################
+    """
+    folder_mother = '/home/sr365/NA+Paper_plots/compare_worse/'
+    #folder = os.path.join(folder_mother, 'Random_BP')
+    #folder = os.path.join(folder_mother, 'Random_FF')
+    folder = os.path.join(folder_mother, 'Random_BPFF')
+    dash_group,dash_label,solid_label = '1X','baseline','worse'
+
+    datasets = ['robotic_arm','sine_wave','ballistics','meta_material']
+    for dataset in datasets:
+            DrawAggregateMeanAvgnMSEPlot(folder, dataset, dash_group=dash_group, dash_label=dash_label, solid_label=solid_label,worse_model_mode=True)
+    """
+

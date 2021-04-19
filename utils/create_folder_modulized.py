@@ -9,11 +9,12 @@ import shutil
 # create_directory_folder = '/work/sr365/ICML_exp/'
 # create_directory_folder = '/home/sr365/ICML_exp_cINN_ball/'    # For quad
 #create_directory_folder = '/home/sr365/ICML_exp_ball_0.01/'    # For quad
-create_directory_folder = '/home/sr365/ICML_exp_timing/'
-#create_directory_folder = '/home/sr365/ICML_exp_worse_10_times_NA/'    # For quad
-#create_directory_folder = '/home/sr365/ICML_exp_worse_50_times_NA/'    # For quad
-#create_directory_folder = '/home/sr365/ICML_exp_worse_100_times_NA/'    # For quad
-#create_directory_folder = '/home/sr365/ICML_exp_0402/'    # For quad
+#create_directory_folder = '/home/sr365/ICML_exp_timing/'
+#create_directory_folder = '/home/sr365/ICML_exp_worse_10_times/'    # For quad
+#create_directory_folder = '/home/sr365/ICML_exp_worse_50_times/'    # For quad
+#create_directory_folder = '/home/sr365/ICML_exp_worse_100_times/'    # For quad
+create_directory_folder = '/home/sr365/ICML_exp_retrain_1/'    # For quad
+#create_directory_folder = '/home/sr365/ICML_exp_0412/'    # For quad
 #create_directory_folder = '/home/sr365/ICML_exp_robo/'    # For quad
 #create_directory_folder = '/data/users/ben/ICML_exp_mm/'    # For Groot 
 # If testing_mode on, only one folder would be in the list: cINN_on_on/robotic
@@ -24,8 +25,8 @@ dataset_list = ['meta_material','robotic_arm','sine_wave','ballistics']
 #dataset_list = ['meta_material']
 #initializer_list = ['Random','cINN']
 #initializer_list = ['Random','cINN','INN','VAE']
-#initializer_list = ['Random','cINN','INN','VAE','MDN']
-initializer_list = ['MDN']
+initializer_list = ['Random','cINN','INN','VAE','MDN']
+#initializer_list = ['MDN']
 optimizer_list_base = ['BP_off']
 filter_list_base = ['FF_off']
 optimizer_list_full = ['BP_on','BP_off']
@@ -98,24 +99,24 @@ def get_folder_modulized(gpu=None, off_only=False):
     return sub_list
     """
 
-    # This is the allocation for quad 3090 non_mm parts 
+    # This is the allocation for quad 3090 non_mm parts, without MDN!!
     if gpu is None:
         return folder_list 
     elif gpu == 0: 
         for folder in folder_list:
-            if 'Random' in folder and 'BP_on' in folder:
+            if 'Random' in folder and 'BP_on' in folder :
                 sub_list.append(folder)
     elif gpu == 1:
         for folder in folder_list:
-            if 'cINN' in folder or 'BP_off' in folder:
+            if 'MDN' in folder and 'BP_on' in folder:
+                sub_list.append(folder)
+            if ('cINN' in folder or 'BP_off' in folder):# and 'MDN' not in folder:
                 sub_list.append(folder)
     elif gpu == 2: 
         for folder in folder_list:
-            if 'MDN' in folder and 'BP_on' in folder:
-                sub_list.append(folder)
-            #if 'VAE' in folder and  'BP_on' in folder:
+            if 'VAE' in folder and  'BP_on' in folder:
             # For timing purpose only
-            if 'VAE' in folder:# and  'BP_on' in folder:
+            #if 'VAE' in folder:# and  'BP_on' in folder:
                 sub_list.append(folder)
     elif gpu == 3: 
         for folder in folder_list:
@@ -124,7 +125,7 @@ def get_folder_modulized(gpu=None, off_only=False):
     elif gpu == 9:
         # special test case for easy testing
         for folder in folder_list:
-            if 'Random' in folder and 'BP_on' in folder:
+            if 'MDN' in folder:
                 sub_list.append(folder)
     return sub_list
     
@@ -273,7 +274,7 @@ def main():
 
 
 if __name__ == '__main__':
-    #folders = get_folder_modulized(gpu=2, off_only=False)
+    #folders = get_folder_modulized(gpu=1, off_only=False)
     #for fod in folders:
     #    print(fod)
 

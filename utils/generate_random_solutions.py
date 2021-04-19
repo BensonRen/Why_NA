@@ -6,7 +6,7 @@ import pandas as ipd
 import os
 import shutil
 # Own module
-from utils.create_folder_modulized import get_folder_modulized
+from utils.create_folder_modulized import get_folder_modulized, create_directory_folder
 from utils.helper_functions import simulator
 from Simulated_DataSets.Meta_material_Neural_Simulator.generate_mm_x import generate_meta_material
 from utils.time_recorder import time_keeper
@@ -20,14 +20,15 @@ dataset_list = ['meta_material','robotic_arm','sine_wave','ballistics']
 data_num_base = 1000
 trail_num = 2048
 
-meta_data_num = 500
+meta_data_num = 1000
 
 # Where to steal the Xtruth, Ytruth file (This function can not produce Xtruth and Ytruth as it is just a random generator. However the evaluation needs a Xtruth and Ytruth file, therefore we are just going to steal the Truth files from the neighbouring folder
 #truth_folder = '/work/sr365/ICML_mm/cINN_BP_off_FF_off/'
 #truth_folder = '/work/sr365/ICML_exp/cINN_BP_off_FF_off/'
+truth_folder = os.path.join(create_directory_folder, 'cINN_BP_off_FF_off')
 
 #truth_folder = '/data/users/ben/ICML_exp_mm/cINN_BP_off_FF_off/' # I am Groot!
-truth_folder =  '/home/sr365/ICML_exp_0402/cINN_BP_off_FF_off/'   # quad
+#truth_folder =  '/home/sr365/ICML_exp_0402/cINN_BP_off_FF_off/'   # quad
 #truth_folder =  '/home/sr365/ICML_exp/cINN_BP_off_FF_off/'   # quad
 
 def generate_sine_wave(data_num):

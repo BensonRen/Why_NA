@@ -1,6 +1,9 @@
 import os
 import numpy
+from utils.create_folder_modulized import create_directory_folder
 
+#input_dir = create_directory_folder
+input_dir = '/home/sr365/Why_NA/NA_loss_surface/NA_true_SGD_30k_init/NA_temp'
 # This is the program to delete all the duplicate Xtruth Ytruth files generated
 #input_dir = '/work/sr365/multi_eval/'                # NIPS code version
 #input_dir = '/work/sr365/multi_eval/'                # NIPS code version
@@ -12,7 +15,7 @@ import numpy
 ###############
 #input_dir =  '/home/sr365/ICML_exp/'   # quad
 #input_dir = '/home/sr365/ICML_exp_robo/'    # For quad
-input_dir =  '/home/sr365/ICML_MDN/'   # quad
+#input_dir =  '/home/sr365/ICML_MDN/'   # quad
 #input_dir =  '/home/sr365/ICML_exp_0402/'   # quad
 #input_dir =  '/home/sr365/multi_eval/'   # quad
 
@@ -23,7 +26,7 @@ input_dir =  '/home/sr365/ICML_MDN/'   # quad
 #input_dir = '/data/users/ben/ICML_exp/'                #  I am Groot!
 #input_dir = '/data/users/ben/ICML_exp_mm/'                #  I am Groot!
 #input_dir = '/work/sr365/ICML_mm/'                # ICML code version --- MM special
-delete_mse_file_mode = True                            # Deleting the mse file for the forward filtering
+delete_mse_file_mode = True                           # Deleting the mse file for the forward filtering
 
 
 # For all the architectures
